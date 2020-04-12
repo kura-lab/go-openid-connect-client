@@ -1,7 +1,6 @@
 package authorization
 
 import (
-	"log"
 	"net/url"
 
 	"../oidcconfig"
@@ -137,8 +136,6 @@ func (authorization *Authorization) GenerateURL() (string, error) {
 	if authorization.authenticationContextReferenceValues != "" {
 		q.Set("acr_values", authorization.authenticationContextReferenceValues)
 	}
-
-	log.Println("generated authorization endpoint url and redirect the url")
 
 	u.RawQuery = q.Encode()
 	return u.String(), nil
