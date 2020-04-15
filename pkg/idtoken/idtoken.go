@@ -18,18 +18,17 @@ type IDTokenHeader struct {
 }
 
 type IDTokenPayload struct {
-	Issuer  string `json:"iss"`
-	Subject string `json:"sub"`
-	//TBD
-	//Audience   []string `json:"aud"`
-	Audience                       string   `json:"aud"`
-	Expiration                     int      `json:"exp"`
-	IssueAt                        int      `json:"iat"`
-	AuthTime                       int      `json:"auth_time"`
-	Nonce                          string   `json:"nonce"`
-	AuthenticationMethodReference  []string `json:"amr"`
-	AccessTokenHash                string   `json:"at_hash"`
-	AuthenticationContextReference string   `json:"acr"`
+	Issuer                         string `json:"iss"`
+	Subject                        string `json:"sub"`
+	Audience                       []string
+	RawAudience                    json.RawMessage `json:"aud"`
+	Expiration                     int             `json:"exp"`
+	IssueAt                        int             `json:"iat"`
+	AuthTime                       int             `json:"auth_time"`
+	Nonce                          string          `json:"nonce"`
+	AuthenticationMethodReference  []string        `json:"amr"`
+	AccessTokenHash                string          `json:"at_hash"`
+	AuthenticationContextReference string          `json:"acr"`
 }
 
 type IDToken struct {
@@ -69,6 +68,15 @@ func NewIDToken(oidcconfig *oidcconfig.OIDCConfig, rawIDToken string) (*IDToken,
 	if err != nil {
 		return nil, err
 	}
+
+	if err := json.Unmarshal(iDTokenPayload.RawAudience, &iDTokenPayload.Audience); err != nil {
+		var audString string
+		if err := json.Unmarshal(iDTokenPayload.RawAudience, &audString); err != nil {
+			return nil, err
+		}
+		iDTokenPayload.Audience = append(iDTokenPayload.Audience, audString)
+	}
+
 	iDToken.iDTokenPayload = iDTokenPayload
 
 	decodedSignature, err := base64.RawURLEncoding.DecodeString(iDToken.iDTokenParts[2])
