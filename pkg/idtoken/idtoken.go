@@ -8,7 +8,7 @@ import (
 	"errors"
 	"strings"
 
-	"../oidcconfig"
+	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
 type IDTokenHeader struct {

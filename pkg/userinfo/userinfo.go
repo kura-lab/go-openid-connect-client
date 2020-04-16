@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	"../oidcconfig"
+	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
 type UserInfoResponse struct {

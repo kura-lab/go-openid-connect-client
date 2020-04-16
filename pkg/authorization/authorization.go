@@ -3,7 +3,7 @@ package authorization
 import (
 	"net/url"
 
-	"../oidcconfig"
+	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
 type Authorization struct {

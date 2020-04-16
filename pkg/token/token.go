@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"strings"
 
-	"../oidcconfig"
+	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
 type TokenResponse struct {
