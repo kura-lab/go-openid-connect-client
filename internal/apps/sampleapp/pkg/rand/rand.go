@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// GenerateRandomString is function to generate ramdom string.
 func GenerateRandomString(number int) string {
 	rand.Seed(time.Now().UnixNano())
 	letters := getLetters()
