@@ -11,15 +11,15 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
-// IDTokenHeader is struct for decoded ID Token Header.
-type IDTokenHeader struct {
+// Header is struct for decoded ID Token Header.
+type Header struct {
 	Type      string `json:"typ"`
 	Algorithm string `json:"alg"`
 	KeyID     string `json:"kid"`
 }
 
-// IDTokenPayload is struct for decoded ID Token Payload.
-type IDTokenPayload struct {
+// Payload is struct for decoded ID Token Payload.
+type Payload struct {
 	Issuer                         string `json:"iss"`
 	Subject                        string `json:"sub"`
 	Audience                       []string
@@ -33,12 +33,12 @@ type IDTokenPayload struct {
 	AuthenticationContextReference string          `json:"acr"`
 }
 
-// TokenResponse is struct for ID Token.
+// IDToken is struct for ID Token.
 type IDToken struct {
 	oidcconfig       *oidcconfig.OIDCConfig
 	iDTokenParts     []string
-	iDTokenHeader    *IDTokenHeader
-	iDTokenPayload   *IDTokenPayload
+	iDTokenHeader    *Header
+	iDTokenPayload   *Payload
 	decodedSignature []byte
 }
 
@@ -55,7 +55,7 @@ func NewIDToken(oidcconfig *oidcconfig.OIDCConfig, rawIDToken string) (*IDToken,
 	if err != nil {
 		return nil, err
 	}
-	iDTokenHeader := new(IDTokenHeader)
+	iDTokenHeader := new(Header)
 	err = json.Unmarshal(header, iDTokenHeader)
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func NewIDToken(oidcconfig *oidcconfig.OIDCConfig, rawIDToken string) (*IDToken,
 		return nil, err
 	}
 
-	iDTokenPayload := new(IDTokenPayload)
+	iDTokenPayload := new(Payload)
 	err = json.Unmarshal(decodedPayload, iDTokenPayload)
 	if err != nil {
 		return nil, err
@@ -118,8 +118,8 @@ func (iDToken *IDToken) VerifyIDTokenHeader() error {
 	return nil
 }
 
-// GetIDTokenHeader is method to getter of IDTokenHeader struct.
-func (iDToken *IDToken) GetIDTokenHeader() *IDTokenHeader {
+// GetIDTokenHeader is method to getter of Header struct.
+func (iDToken *IDToken) GetIDTokenHeader() *Header {
 	return iDToken.iDTokenHeader
 }
 
@@ -137,8 +137,8 @@ func (iDToken *IDToken) VerifySignature(publicKey rsa.PublicKey) error {
 	return err
 }
 
-// GetIDTokenPayload is method to getter of IDTokenPayload struct.
+// GetIDTokenPayload is method to getter of Payload struct.
 //TBD
-func (iDToken *IDToken) GetIDTokenPayload() *IDTokenPayload {
+func (iDToken *IDToken) GetIDTokenPayload() *Payload {
 	return iDToken.iDTokenPayload
 }
