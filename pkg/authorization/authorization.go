@@ -6,6 +6,7 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
+// Authorization is struct to generate Authorization Endpoint URL.
 type Authorization struct {
 	oidcconfig *oidcconfig.OIDCConfig
 	// required
@@ -24,6 +25,7 @@ type Authorization struct {
 	authenticationContextReferenceValues string
 }
 
+// NewAuthorization is Authorization constructor function
 func NewAuthorization(oidcconfig *oidcconfig.OIDCConfig, clientID string, redirectURI string, options ...Option) *Authorization {
 	authorization := new(Authorization)
 	authorization.oidcconfig = oidcconfig
@@ -38,6 +40,7 @@ func NewAuthorization(oidcconfig *oidcconfig.OIDCConfig, clientID string, redire
 	return authorization
 }
 
+// Option is function for Authorization struct initialization
 type Option func(*Authorization) error
 
 func ResponseType(responseType string) Option {
