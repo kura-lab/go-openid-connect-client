@@ -12,6 +12,7 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
+// TokenResponse is struct for Token Response.
 type TokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	TokenType    string `json:"token_type"`
@@ -20,6 +21,7 @@ type TokenResponse struct {
 	IDToken      string `json:"id_token"`
 }
 
+// Token is struct to request Token Endpoint.
 type Token struct {
 	oidcconfig *oidcconfig.OIDCConfig
 	// required
@@ -34,6 +36,7 @@ type Token struct {
 	refreshToken      string
 }
 
+// NewToken is Token constructor function.
 func NewToken(oidcconfig *oidcconfig.OIDCConfig, clientID string, clientSecret string, options ...Option) *Token {
 	token := new(Token)
 	token.oidcconfig = oidcconfig
@@ -47,8 +50,10 @@ func NewToken(oidcconfig *oidcconfig.OIDCConfig, clientID string, clientSecret s
 	return token
 }
 
+// Option is functional option for Token struct initialization.
 type Option func(*Token) error
 
+// GrantType is functional option to add "grant_type" parameter.
 func GrantType(grantType string) Option {
 	return func(token *Token) error {
 		token.grantType = grantType
@@ -56,6 +61,7 @@ func GrantType(grantType string) Option {
 	}
 }
 
+// CodeVerifier is functional option to add "code_verifier" parameter.
 func CodeVerifier(codeVerifier string) Option {
 	return func(token *Token) error {
 		token.codeVerifier = codeVerifier
@@ -63,6 +69,7 @@ func CodeVerifier(codeVerifier string) Option {
 	}
 }
 
+// AuthorizationCode is functional option to add "authorization_code" parameter.
 func AuthorizationCode(authorizationCode string) Option {
 	return func(token *Token) error {
 		token.authorizationCode = authorizationCode
@@ -70,6 +77,7 @@ func AuthorizationCode(authorizationCode string) Option {
 	}
 }
 
+// RedirectURI is functional option to add "redirect_uri" parameter.
 func RedirectURI(redirectURI string) Option {
 	return func(token *Token) error {
 		token.redirectURI = redirectURI
@@ -77,6 +85,7 @@ func RedirectURI(redirectURI string) Option {
 	}
 }
 
+// RefreshToken is functional option to add "refresh_token" parameter.
 func RefreshToken(refreshToken string) Option {
 	return func(token *Token) error {
 		token.refreshToken = refreshToken
@@ -84,6 +93,7 @@ func RefreshToken(refreshToken string) Option {
 	}
 }
 
+// Request is method to request Token Endpoint.
 func (token *Token) Request() (TokenResponse, error) {
 	values := url.Values{}
 	values.Set("grant_type", token.grantType)
