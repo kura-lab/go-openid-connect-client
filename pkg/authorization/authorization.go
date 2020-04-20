@@ -25,7 +25,7 @@ type Authorization struct {
 	authenticationContextReferenceValues string
 }
 
-// NewAuthorization is Authorization constructor function
+// NewAuthorization is Authorization constructor function.
 func NewAuthorization(oidcconfig *oidcconfig.OIDCConfig, clientID string, redirectURI string, options ...Option) *Authorization {
 	authorization := new(Authorization)
 	authorization.oidcconfig = oidcconfig
@@ -40,9 +40,10 @@ func NewAuthorization(oidcconfig *oidcconfig.OIDCConfig, clientID string, redire
 	return authorization
 }
 
-// Option is function for Authorization struct initialization
+// Option is functional option for Authorization struct initialization.
 type Option func(*Authorization) error
 
+// ResponseType is functional option to add "response_type" parameter.
 func ResponseType(responseType string) Option {
 	return func(authorization *Authorization) error {
 		authorization.responseType = responseType
@@ -50,6 +51,7 @@ func ResponseType(responseType string) Option {
 	}
 }
 
+// Scope is functional option to add "scope" parameter.
 func Scope(scope string) Option {
 	return func(authorization *Authorization) error {
 		authorization.scope = scope
@@ -57,6 +59,7 @@ func Scope(scope string) Option {
 	}
 }
 
+// State is functional option to add "state" parameter.
 func State(state string) Option {
 	return func(authorization *Authorization) error {
 		authorization.state = state
@@ -64,6 +67,7 @@ func State(state string) Option {
 	}
 }
 
+// Nonce is functional option to add "nonce" parameter.
 func Nonce(nonce string) Option {
 	return func(authorization *Authorization) error {
 		authorization.nonce = nonce
@@ -71,6 +75,7 @@ func Nonce(nonce string) Option {
 	}
 }
 
+// Prompt is functional option to add "prompt" parameter.
 func Prompt(prompt string) Option {
 	return func(authorization *Authorization) error {
 		authorization.prompt = prompt
@@ -78,6 +83,7 @@ func Prompt(prompt string) Option {
 	}
 }
 
+// Display is functional option to add "display" parameter.
 func Display(display string) Option {
 	return func(authorization *Authorization) error {
 		authorization.display = display
@@ -85,6 +91,7 @@ func Display(display string) Option {
 	}
 }
 
+// CodeChallenge is functional option to add "code_challenge" parameter.
 func CodeChallenge(codeChallenge string) Option {
 	return func(authorization *Authorization) error {
 		authorization.codeChallenge = codeChallenge
@@ -92,6 +99,7 @@ func CodeChallenge(codeChallenge string) Option {
 	}
 }
 
+// CodeChallengeMethod is functional option to add "code_challenge_method" parameter.
 func CodeChallengeMethod(codeChallengeMethod string) Option {
 	return func(authorization *Authorization) error {
 		authorization.codeChallengeMethod = codeChallengeMethod
@@ -99,6 +107,7 @@ func CodeChallengeMethod(codeChallengeMethod string) Option {
 	}
 }
 
+// AuthenticationContextReferenceValues is functional option to add "acr_values" parameter.
 func AuthenticationContextReferenceValues(authenticationContextReferenceValues string) Option {
 	return func(authorization *Authorization) error {
 		authorization.authenticationContextReferenceValues = authenticationContextReferenceValues
@@ -106,6 +115,7 @@ func AuthenticationContextReferenceValues(authenticationContextReferenceValues s
 	}
 }
 
+// GenerateURL is method to generate Authorization Endpoint URL
 func (authorization *Authorization) GenerateURL() (string, error) {
 
 	u, err := url.Parse(authorization.oidcconfig.AuthorizationEndpoint())
