@@ -11,12 +11,14 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
+// IDTokenHeader is struct for decoded ID Token Header.
 type IDTokenHeader struct {
 	Type      string `json:"typ"`
 	Algorithm string `json:"alg"`
 	KeyID     string `json:"kid"`
 }
 
+// IDTokenPayload is struct for decoded ID Token Payload.
 type IDTokenPayload struct {
 	Issuer                         string `json:"iss"`
 	Subject                        string `json:"sub"`
@@ -31,6 +33,7 @@ type IDTokenPayload struct {
 	AuthenticationContextReference string          `json:"acr"`
 }
 
+// TokenResponse is struct for ID Token.
 type IDToken struct {
 	oidcconfig       *oidcconfig.OIDCConfig
 	iDTokenParts     []string
@@ -39,6 +42,7 @@ type IDToken struct {
 	decodedSignature []byte
 }
 
+// NewIDToken is IDToken constructor function.
 //TBD
 //func NewIDToken(oidcconfig *oidcconfig.OIDCConfig, rawIDToken string, options ...Option) *IDToken {
 func NewIDToken(oidcconfig *oidcconfig.OIDCConfig, rawIDToken string) (*IDToken, error) {
@@ -102,6 +106,7 @@ func NewIDToken(oidcconfig *oidcconfig.OIDCConfig, rawIDToken string) (*IDToken,
 //	}
 //}
 
+// VerifyIDTokenHeader is method to verify ID Token Header.
 func (iDToken *IDToken) VerifyIDTokenHeader() error {
 	if iDToken.iDTokenHeader.Type != "JWT" {
 		return errors.New("unsupported header type")
@@ -113,10 +118,12 @@ func (iDToken *IDToken) VerifyIDTokenHeader() error {
 	return nil
 }
 
+// GetIDTokenHeader is method to getter of IDTokenHeader struct.
 func (iDToken *IDToken) GetIDTokenHeader() *IDTokenHeader {
 	return iDToken.iDTokenHeader
 }
 
+// VerifySignature is method to verify ID Token signature.
 func (iDToken *IDToken) VerifySignature(publicKey rsa.PublicKey) error {
 	hash := crypto.Hash.New(crypto.SHA256)
 	_, err := hash.Write([]byte(iDToken.iDTokenParts[0] + "." + iDToken.iDTokenParts[1]))
@@ -130,6 +137,7 @@ func (iDToken *IDToken) VerifySignature(publicKey rsa.PublicKey) error {
 	return err
 }
 
+// GetIDTokenPayload is method to getter of IDTokenPayload struct.
 //TBD
 func (iDToken *IDToken) GetIDTokenPayload() *IDTokenPayload {
 	return iDToken.iDTokenPayload
