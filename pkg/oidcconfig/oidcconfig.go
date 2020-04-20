@@ -8,7 +8,8 @@ import (
 	"net/http"
 )
 
-type OIDCConfigResponse struct {
+// Response is struct for OpenID Configuration Response.
+type Response struct {
 	Issuer                string `json:"issuer"`
 	AuthorizationEndpoint string `json:"authorization_endpoint"`
 	TokenEndpoint         string `json:"token_endpoint"`
@@ -16,6 +17,7 @@ type OIDCConfigResponse struct {
 	JWKsURI               string `json:"jwks_uri"`
 }
 
+// OIDCConfig is struct to request OpenID Configuration Endpoint.
 type OIDCConfig struct {
 	uRL                   string
 	issuer                string
@@ -25,12 +27,14 @@ type OIDCConfig struct {
 	jWKsURI               string
 }
 
+// New is OIDCConfig constructor function.
 func New(uRL string) *OIDCConfig {
 	config := new(OIDCConfig)
 	config.uRL = uRL
 	return config
 }
 
+// NewOIDCConfig is OIDCConfig constructor function.
 func NewOIDCConfig(options ...Option) *OIDCConfig {
 	config := new(OIDCConfig)
 	for _, option := range options {
@@ -39,8 +43,10 @@ func NewOIDCConfig(options ...Option) *OIDCConfig {
 	return config
 }
 
+// Option is functional option for OIDCConfig struct initialization.
 type Option func(*OIDCConfig) error
 
+// Issuer is functional option to add Issuer.
 func Issuer(issuer string) Option {
 	return func(config *OIDCConfig) error {
 		config.issuer = issuer
@@ -48,6 +54,7 @@ func Issuer(issuer string) Option {
 	}
 }
 
+// AuthorizationEndpoint is functional option to add Authorization Endpoint.
 func AuthorizationEndpoint(authorizationEndpoint string) Option {
 	return func(config *OIDCConfig) error {
 		config.authorizationEndpoint = authorizationEndpoint
@@ -55,6 +62,7 @@ func AuthorizationEndpoint(authorizationEndpoint string) Option {
 	}
 }
 
+// TokenEndpoint is functional option to add Token Endpoint.
 func TokenEndpoint(tokenEndpoint string) Option {
 	return func(config *OIDCConfig) error {
 		config.tokenEndpoint = tokenEndpoint
@@ -62,6 +70,7 @@ func TokenEndpoint(tokenEndpoint string) Option {
 	}
 }
 
+// UserInfoEndpoint is functional option to add UserInfo Endpoint.
 func UserInfoEndpoint(userInfoEndpoint string) Option {
 	return func(config *OIDCConfig) error {
 		config.userInfoEndpoint = userInfoEndpoint
@@ -69,6 +78,7 @@ func UserInfoEndpoint(userInfoEndpoint string) Option {
 	}
 }
 
+// JWKsURI is functional option to add JWKs URI.
 func JWKsURI(jWKsURI string) Option {
 	return func(config *OIDCConfig) error {
 		config.jWKsURI = jWKsURI
@@ -76,26 +86,32 @@ func JWKsURI(jWKsURI string) Option {
 	}
 }
 
+// Issuer is getter of issuer.
 func (config *OIDCConfig) Issuer() string {
 	return config.issuer
 }
 
+// AuthorizationEndpoint is getter of Authorization Endpoint.
 func (config *OIDCConfig) AuthorizationEndpoint() string {
 	return config.authorizationEndpoint
 }
 
+// TokenEndpoint is getter of Token Endpoint.
 func (config *OIDCConfig) TokenEndpoint() string {
 	return config.tokenEndpoint
 }
 
+// UserInfoEndpoint is getter of UserInfo Endpoint.
 func (config *OIDCConfig) UserInfoEndpoint() string {
 	return config.userInfoEndpoint
 }
 
+// JWKsURI is getter of JWKs URI.
 func (config *OIDCConfig) JWKsURI() string {
 	return config.jWKsURI
 }
 
+// Request is method to request OpenID Configuration Endpoint.
 func (config *OIDCConfig) Request() error {
 	configRequest, err := http.NewRequest(
 		"GET",
@@ -121,7 +137,7 @@ func (config *OIDCConfig) Request() error {
 		return err
 	}
 
-	var configResponse OIDCConfigResponse
+	var configResponse Response
 	err = json.NewDecoder(response.Body).Decode(&configResponse)
 	if err != nil {
 		return err

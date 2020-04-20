@@ -10,7 +10,8 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
-type UserInfoResponse struct {
+// Response is struct for UserInfo Response.
+type Response struct {
 	Subject             string `json:"sub"`
 	Name                string `json:"name"`
 	GivenName           string `json:"given_name"`
@@ -40,12 +41,14 @@ type UserInfoResponse struct {
 	UpdatedAt int `json:"updated_at"`
 }
 
+// UserInfo is struct to request UserInfo Endpoint.
 type UserInfo struct {
 	oidcconfig *oidcconfig.OIDCConfig
 	// required
 	accessToken string
 }
 
+// NewUserInfo is UserInfo constructor function.
 func NewUserInfo(oidcconfig *oidcconfig.OIDCConfig, accessToken string, options ...Option) *UserInfo {
 	userInfo := new(UserInfo)
 	userInfo.oidcconfig = oidcconfig
@@ -57,9 +60,11 @@ func NewUserInfo(oidcconfig *oidcconfig.OIDCConfig, accessToken string, options 
 	return userInfo
 }
 
+// Option is functional option for UserInfo struct initialization.
 type Option func(*UserInfo) error
 
-func (userInfo *UserInfo) Request() (UserInfoResponse, error) {
+// Request is method to request UserInfo Endpoint.
+func (userInfo *UserInfo) Request() (Response, error) {
 
 	userInfoRequest, err := http.NewRequest(
 		"POST",
@@ -67,7 +72,7 @@ func (userInfo *UserInfo) Request() (UserInfoResponse, error) {
 		nil,
 	)
 	if err != nil {
-		return UserInfoResponse{}, err
+		return Response{}, err
 	}
 
 	userInfoRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -85,13 +90,13 @@ func (userInfo *UserInfo) Request() (UserInfoResponse, error) {
 	}()
 
 	if err != nil {
-		return UserInfoResponse{}, err
+		return Response{}, err
 	}
 
-	var userInfoResponse UserInfoResponse
+	var userInfoResponse Response
 	err = json.NewDecoder(response.Body).Decode(&userInfoResponse)
 	if err != nil {
-		return UserInfoResponse{}, err
+		return Response{}, err
 	}
 
 	return userInfoResponse, nil

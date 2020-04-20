@@ -11,13 +11,15 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
-type IDTokenHeader struct {
+// Header is struct for decoded ID Token Header.
+type Header struct {
 	Type      string `json:"typ"`
 	Algorithm string `json:"alg"`
 	KeyID     string `json:"kid"`
 }
 
-type IDTokenPayload struct {
+// Payload is struct for decoded ID Token Payload.
+type Payload struct {
 	Issuer                         string `json:"iss"`
 	Subject                        string `json:"sub"`
 	Audience                       []string
@@ -31,14 +33,16 @@ type IDTokenPayload struct {
 	AuthenticationContextReference string          `json:"acr"`
 }
 
+// IDToken is struct for ID Token.
 type IDToken struct {
 	oidcconfig       *oidcconfig.OIDCConfig
 	iDTokenParts     []string
-	iDTokenHeader    *IDTokenHeader
-	iDTokenPayload   *IDTokenPayload
+	iDTokenHeader    *Header
+	iDTokenPayload   *Payload
 	decodedSignature []byte
 }
 
+// NewIDToken is IDToken constructor function.
 //TBD
 //func NewIDToken(oidcconfig *oidcconfig.OIDCConfig, rawIDToken string, options ...Option) *IDToken {
 func NewIDToken(oidcconfig *oidcconfig.OIDCConfig, rawIDToken string) (*IDToken, error) {
@@ -51,7 +55,7 @@ func NewIDToken(oidcconfig *oidcconfig.OIDCConfig, rawIDToken string) (*IDToken,
 	if err != nil {
 		return nil, err
 	}
-	iDTokenHeader := new(IDTokenHeader)
+	iDTokenHeader := new(Header)
 	err = json.Unmarshal(header, iDTokenHeader)
 	if err != nil {
 		return nil, err
@@ -63,7 +67,7 @@ func NewIDToken(oidcconfig *oidcconfig.OIDCConfig, rawIDToken string) (*IDToken,
 		return nil, err
 	}
 
-	iDTokenPayload := new(IDTokenPayload)
+	iDTokenPayload := new(Payload)
 	err = json.Unmarshal(decodedPayload, iDTokenPayload)
 	if err != nil {
 		return nil, err
@@ -102,6 +106,7 @@ func NewIDToken(oidcconfig *oidcconfig.OIDCConfig, rawIDToken string) (*IDToken,
 //	}
 //}
 
+// VerifyIDTokenHeader is method to verify ID Token Header.
 func (iDToken *IDToken) VerifyIDTokenHeader() error {
 	if iDToken.iDTokenHeader.Type != "JWT" {
 		return errors.New("unsupported header type")
@@ -113,10 +118,12 @@ func (iDToken *IDToken) VerifyIDTokenHeader() error {
 	return nil
 }
 
-func (iDToken *IDToken) GetIDTokenHeader() *IDTokenHeader {
+// GetIDTokenHeader is method to getter of Header struct.
+func (iDToken *IDToken) GetIDTokenHeader() *Header {
 	return iDToken.iDTokenHeader
 }
 
+// VerifySignature is method to verify ID Token signature.
 func (iDToken *IDToken) VerifySignature(publicKey rsa.PublicKey) error {
 	hash := crypto.Hash.New(crypto.SHA256)
 	_, err := hash.Write([]byte(iDToken.iDTokenParts[0] + "." + iDToken.iDTokenParts[1]))
@@ -130,7 +137,8 @@ func (iDToken *IDToken) VerifySignature(publicKey rsa.PublicKey) error {
 	return err
 }
 
+// GetIDTokenPayload is method to getter of Payload struct.
 //TBD
-func (iDToken *IDToken) GetIDTokenPayload() *IDTokenPayload {
+func (iDToken *IDToken) GetIDTokenPayload() *Payload {
 	return iDToken.iDTokenPayload
 }

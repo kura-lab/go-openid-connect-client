@@ -15,7 +15,8 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
-type JWKsResponse struct {
+// Response is struct for JWKs URL Response.
+type Response struct {
 	KeySets []struct {
 		KeyID     string `json:"kid"`
 		KeyType   string `json:"kty"`
@@ -26,12 +27,14 @@ type JWKsResponse struct {
 	} `json:"keys"`
 }
 
+// JWKs is struct to request JWKs URL.
 type JWKs struct {
 	oidcconfig *oidcconfig.OIDCConfig
 	keyID      string
 	algorithm  string
 }
 
+// NewJWKs is JWKs URL constructor function.
 func NewJWKs(oidcconfig *oidcconfig.OIDCConfig, keyID string, algorithm string) *JWKs {
 	jWKs := new(JWKs)
 	jWKs.oidcconfig = oidcconfig
@@ -41,6 +44,7 @@ func NewJWKs(oidcconfig *oidcconfig.OIDCConfig, keyID string, algorithm string) 
 	return jWKs
 }
 
+// Request is method to request JWKs URL.
 func (jWKs *JWKs) Request() (rsa.PublicKey, error) {
 	response, err := http.Get(jWKs.oidcconfig.JWKsURI())
 	if err != nil {
@@ -57,7 +61,7 @@ func (jWKs *JWKs) Request() (rsa.PublicKey, error) {
 		}
 	}()
 
-	var jWKsResponse JWKsResponse
+	var jWKsResponse Response
 	err = json.NewDecoder(response.Body).Decode(&jWKsResponse)
 	if err != nil {
 		return rsa.PublicKey{}, err
