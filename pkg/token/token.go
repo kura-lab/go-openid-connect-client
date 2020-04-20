@@ -12,8 +12,8 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
-// TokenResponse is struct for Token Response.
-type TokenResponse struct {
+// Response is struct for Token Response.
+type Response struct {
 	AccessToken  string `json:"access_token"`
 	TokenType    string `json:"token_type"`
 	RefreshToken string `json:"refresh_token"`
@@ -94,7 +94,7 @@ func RefreshToken(refreshToken string) Option {
 }
 
 // Request is method to request Token Endpoint.
-func (token *Token) Request() (TokenResponse, error) {
+func (token *Token) Request() (Response, error) {
 	values := url.Values{}
 	values.Set("grant_type", token.grantType)
 
@@ -117,7 +117,7 @@ func (token *Token) Request() (TokenResponse, error) {
 		strings.NewReader(values.Encode()),
 	)
 	if err != nil {
-		return TokenResponse{}, err
+		return Response{}, err
 	}
 	tokenRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	tokenRequest.SetBasicAuth(token.clientID, token.clientSecret)
@@ -134,13 +134,13 @@ func (token *Token) Request() (TokenResponse, error) {
 	}()
 
 	if err != nil {
-		return TokenResponse{}, err
+		return Response{}, err
 	}
 
-	var tokenResponse TokenResponse
+	var tokenResponse Response
 	err = json.NewDecoder(response.Body).Decode(&tokenResponse)
 	if err != nil {
-		return TokenResponse{}, err
+		return Response{}, err
 	}
 
 	return tokenResponse, nil
