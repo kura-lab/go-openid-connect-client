@@ -10,8 +10,8 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
-// UserInfoResponse is struct for UserInfo Response.
-type UserInfoResponse struct {
+// Response is struct for UserInfo Response.
+type Response struct {
 	Subject             string `json:"sub"`
 	Name                string `json:"name"`
 	GivenName           string `json:"given_name"`
@@ -64,7 +64,7 @@ func NewUserInfo(oidcconfig *oidcconfig.OIDCConfig, accessToken string, options 
 type Option func(*UserInfo) error
 
 // Request is method to request UserInfo Endpoint.
-func (userInfo *UserInfo) Request() (UserInfoResponse, error) {
+func (userInfo *UserInfo) Request() (Response, error) {
 
 	userInfoRequest, err := http.NewRequest(
 		"POST",
@@ -72,7 +72,7 @@ func (userInfo *UserInfo) Request() (UserInfoResponse, error) {
 		nil,
 	)
 	if err != nil {
-		return UserInfoResponse{}, err
+		return Response{}, err
 	}
 
 	userInfoRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -90,13 +90,13 @@ func (userInfo *UserInfo) Request() (UserInfoResponse, error) {
 	}()
 
 	if err != nil {
-		return UserInfoResponse{}, err
+		return Response{}, err
 	}
 
-	var userInfoResponse UserInfoResponse
+	var userInfoResponse Response
 	err = json.NewDecoder(response.Body).Decode(&userInfoResponse)
 	if err != nil {
-		return UserInfoResponse{}, err
+		return Response{}, err
 	}
 
 	return userInfoResponse, nil
