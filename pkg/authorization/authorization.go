@@ -2,7 +2,10 @@ package authorization
 
 import (
 	"net/url"
+	"strings"
 
+	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/responsetype"
+	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/scope"
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
@@ -12,13 +15,13 @@ type Authorization struct {
 	// required
 	clientID     string
 	redirectURI  string
-	responseType string
-	scope        string
+	responseType []string
+	scope        []string
 	// recommended
 	state string
 	nonce string
 	// optional
-	prompt                               string
+	prompt                               []string
 	display                              string
 	codeChallenge                        string
 	codeChallengeMethod                  string
@@ -31,8 +34,8 @@ func NewAuthorization(oidcconfig *oidcconfig.OIDCConfig, clientID string, redire
 	authorization.oidcconfig = oidcconfig
 	authorization.clientID = clientID
 	authorization.redirectURI = redirectURI
-	authorization.responseType = "code"
-	authorization.scope = "openid"
+	authorization.responseType = []string{responsetype.Code}
+	authorization.scope = []string{scope.OpenID}
 
 	for _, option := range options {
 		option(authorization)
@@ -44,7 +47,7 @@ func NewAuthorization(oidcconfig *oidcconfig.OIDCConfig, clientID string, redire
 type Option func(*Authorization) error
 
 // ResponseType is functional option to add "response_type" parameter.
-func ResponseType(responseType string) Option {
+func ResponseType(responseType ...string) Option {
 	return func(authorization *Authorization) error {
 		authorization.responseType = responseType
 		return nil
@@ -52,7 +55,7 @@ func ResponseType(responseType string) Option {
 }
 
 // Scope is functional option to add "scope" parameter.
-func Scope(scope string) Option {
+func Scope(scope ...string) Option {
 	return func(authorization *Authorization) error {
 		authorization.scope = scope
 		return nil
@@ -76,7 +79,7 @@ func Nonce(nonce string) Option {
 }
 
 // Prompt is functional option to add "prompt" parameter.
-func Prompt(prompt string) Option {
+func Prompt(prompt ...string) Option {
 	return func(authorization *Authorization) error {
 		authorization.prompt = prompt
 		return nil
@@ -125,8 +128,8 @@ func (authorization *Authorization) GenerateURL() (string, error) {
 	q := u.Query()
 	q.Set("client_id", authorization.clientID)
 	q.Set("redirect_uri", authorization.redirectURI)
-	q.Set("response_type", authorization.responseType)
-	q.Set("scope", authorization.scope)
+	q.Set("response_type", strings.Join(authorization.responseType, " "))
+	q.Set("scope", strings.Join(authorization.scope, " "))
 
 	if authorization.state != "" {
 		q.Set("state", authorization.state)
@@ -134,8 +137,8 @@ func (authorization *Authorization) GenerateURL() (string, error) {
 	if authorization.nonce != "" {
 		q.Set("nonce", authorization.nonce)
 	}
-	if authorization.prompt != "" {
-		q.Set("prompt", authorization.prompt)
+	if len(authorization.prompt) > 0 {
+		q.Set("prompt", strings.Join(authorization.prompt, " "))
 	}
 	if authorization.display != "" {
 		q.Set("display", authorization.display)
