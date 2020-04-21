@@ -1,5 +1,6 @@
 package scope
 
+// Constants for scope parameter of Authorization Request.
 const (
 	OpenID  = "openid"
 	Profile = "profile"
