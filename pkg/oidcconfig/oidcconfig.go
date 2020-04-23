@@ -10,21 +10,23 @@ import (
 
 // Response is struct for OpenID Configuration Response.
 type Response struct {
-	Issuer                string `json:"issuer"`
-	AuthorizationEndpoint string `json:"authorization_endpoint"`
-	TokenEndpoint         string `json:"token_endpoint"`
-	UserInfoEndpoint      string `json:"userinfo_endpoint"`
-	JWKsURI               string `json:"jwks_uri"`
+	Issuer                 string   `json:"issuer"`
+	AuthorizationEndpoint  string   `json:"authorization_endpoint"`
+	TokenEndpoint          string   `json:"token_endpoint"`
+	UserInfoEndpoint       string   `json:"userinfo_endpoint"`
+	JWKsURI                string   `json:"jwks_uri"`
+	ResponseTypesSupported []string `json:"response_types_supported"`
 }
 
 // OIDCConfig is struct to request OpenID Configuration Endpoint.
 type OIDCConfig struct {
-	uRL                   string
-	issuer                string
-	authorizationEndpoint string
-	tokenEndpoint         string
-	userInfoEndpoint      string
-	jWKsURI               string
+	uRL                    string
+	issuer                 string
+	authorizationEndpoint  string
+	tokenEndpoint          string
+	userInfoEndpoint       string
+	jWKsURI                string
+	responseTypesSupported []string
 }
 
 // New is OIDCConfig constructor function.
@@ -111,6 +113,11 @@ func (config *OIDCConfig) JWKsURI() string {
 	return config.jWKsURI
 }
 
+// ResponseTypesSupported is getter of response types supported.
+func (config *OIDCConfig) ResponseTypesSupported() []string {
+	return config.responseTypesSupported
+}
+
 // Request is method to request OpenID Configuration Endpoint.
 func (config *OIDCConfig) Request() error {
 	configRequest, err := http.NewRequest(
@@ -157,6 +164,9 @@ func (config *OIDCConfig) Request() error {
 	}
 	if configResponse.JWKsURI != "" {
 		config.jWKsURI = configResponse.JWKsURI
+	}
+	if len(configResponse.ResponseTypesSupported) > 0 {
+		config.responseTypesSupported = configResponse.ResponseTypesSupported
 	}
 
 	return nil
