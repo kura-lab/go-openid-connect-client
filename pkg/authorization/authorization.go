@@ -1,6 +1,7 @@
 package authorization
 
 import (
+	"errors"
 	"net/url"
 	"strings"
 
@@ -128,7 +129,15 @@ func (authorization *Authorization) GenerateURL() (string, error) {
 	q := u.Query()
 	q.Set("client_id", authorization.clientID)
 	q.Set("redirect_uri", authorization.redirectURI)
+
+	if len(authorization.oidcconfig.ResponseTypesSupported()) > 0 && !validateResponseType(
+		authorization.responseType,
+		authorization.oidcconfig.ResponseTypesSupported(),
+	) {
+		return "", errors.New("unsupported response_type")
+	}
 	q.Set("response_type", strings.Join(authorization.responseType, " "))
+
 	q.Set("scope", strings.Join(authorization.scope, " "))
 
 	if authorization.state != "" {
@@ -155,4 +164,41 @@ func (authorization *Authorization) GenerateURL() (string, error) {
 
 	u.RawQuery = q.Encode()
 	return u.String(), nil
+}
+
+func contains(src string, arr []string) bool {
+	for _, value := range arr {
+		if src == value {
+			return true
+		}
+	}
+	return false
+}
+
+func validateResponseType(responseTypes []string, responseTypesSupported []string) bool {
+	exacted := false
+	for _, supportedTypesString := range responseTypesSupported {
+		supportedResponseTypes := strings.Split(supportedTypesString, " ")
+
+		if len(responseTypes) != len(supportedResponseTypes) {
+			continue
+		}
+
+		contain := false
+		for _, responseType := range responseTypes {
+			if contains(responseType, supportedResponseTypes) {
+				contain = true
+				continue
+			} else {
+				contain = false
+				break
+			}
+		}
+		if contain {
+			exacted = true
+			break
+		}
+	}
+
+	return exacted
 }
