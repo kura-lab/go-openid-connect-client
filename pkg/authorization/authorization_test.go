@@ -6,56 +6,32 @@ import (
 
 func TestValidateResponseTypeSucceeds(t *testing.T) {
 
-	if !validateResponseType(
-		[]string{"code"},
-		[]string{"code"},
-	) {
-		t.Errorf("error. expected:%t, actual:%t", true, false)
+	data := [][][]string{
+		{[]string{"code"}, []string{"code"}},
+		{[]string{"token"}, []string{"code", "token"}},
+		{[]string{"code", "token"}, []string{"code", "code token"}},
+		{[]string{"code", "id_token", "token"}, []string{"code", "code token", "code token id_token"}},
 	}
 
-	if !validateResponseType(
-		[]string{"token"},
-		[]string{"code", "token"},
-	) {
-		t.Errorf("error. expected:%t, actual:%t", true, false)
-	}
-
-	if !validateResponseType(
-		[]string{"code", "token"},
-		[]string{"code", "code token"},
-	) {
-		t.Errorf("error. expected:%t, actual:%t", true, false)
-	}
-
-	if !validateResponseType(
-		[]string{"code", "id_token", "token"},
-		[]string{"code", "code token", "code token id_token"},
-	) {
-		t.Errorf("error. expected:%t, actual:%t", true, false)
+	for _, value := range data {
+		if !validateResponseType(value[0], value[1]) {
+			t.Errorf("error. expected:%t, actual:%t", true, false)
+		}
 	}
 }
 
 func TestValidateResponseTypeFailds(t *testing.T) {
 
-	if validateResponseType(
-		[]string{"token"},
-		[]string{"code"},
-	) {
-		t.Errorf("error. expected:%t, actual:%t", false, true)
+	data := [][][]string{
+		{[]string{"token"}, []string{"code"}},
+		{[]string{"token"}, []string{"code", "code token"}},
+		{[]string{"code id_token"}, []string{"code", "code token", "token id_token"}},
 	}
 
-	if validateResponseType(
-		[]string{"token"},
-		[]string{"code", "code token"},
-	) {
-		t.Errorf("error. expected:%t, actual:%t", false, true)
-	}
-
-	if validateResponseType(
-		[]string{"code id_token"},
-		[]string{"code", "code token", "token id_token"},
-	) {
-		t.Errorf("error. expected:%t, actual:%t", false, true)
+	for _, value := range data {
+		if validateResponseType(value[0], value[1]) {
+			t.Errorf("error. expected:%t, actual:%t", false, true)
+		}
 	}
 }
 
