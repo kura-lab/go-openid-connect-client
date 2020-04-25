@@ -16,6 +16,7 @@ type Response struct {
 	UserInfoEndpoint       string   `json:"userinfo_endpoint"`
 	JWKsURI                string   `json:"jwks_uri"`
 	ResponseTypesSupported []string `json:"response_types_supported"`
+	ScopesSupported        []string `json:"scopes_supported"`
 }
 
 // OIDCConfig is struct to request OpenID Configuration Endpoint.
@@ -27,6 +28,7 @@ type OIDCConfig struct {
 	userInfoEndpoint       string
 	jWKsURI                string
 	responseTypesSupported []string
+	scopesSupported        []string
 }
 
 // New is OIDCConfig constructor function.
@@ -118,6 +120,11 @@ func (config *OIDCConfig) ResponseTypesSupported() []string {
 	return config.responseTypesSupported
 }
 
+// ScopesSupported is getter of scopes supported.
+func (config *OIDCConfig) ScopesSupported() []string {
+	return config.scopesSupported
+}
+
 // Request is method to request OpenID Configuration Endpoint.
 func (config *OIDCConfig) Request() error {
 	configRequest, err := http.NewRequest(
@@ -167,6 +174,9 @@ func (config *OIDCConfig) Request() error {
 	}
 	if len(configResponse.ResponseTypesSupported) > 0 {
 		config.responseTypesSupported = configResponse.ResponseTypesSupported
+	}
+	if len(configResponse.ScopesSupported) > 0 {
+		config.scopesSupported = configResponse.ScopesSupported
 	}
 
 	return nil
