@@ -156,7 +156,7 @@ func Nonce(nonce string) Option {
 	}
 }
 
-// IssuedAt is functional option to add expected duration of issued at.
+// DurationIssuedAt is functional option to add expected duration of issued at.
 func DurationIssuedAt(duration int) Option {
 	return func(iDToken *IDToken) error {
 		iDToken.expectedDurationIssueAt = duration
