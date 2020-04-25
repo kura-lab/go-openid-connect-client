@@ -111,6 +111,19 @@ func (token *Token) Request() (Response, error) {
 		values.Add("refresh_token", token.refreshToken)
 	}
 
+	tokenEndpointAuthMethod := "client_secret_basic"
+	for _, method := range token.oidcconfig.TokenEndpointAuthMethodsSupported() {
+		if method == "client_secret_basic" {
+			tokenEndpointAuthMethod = "client_secret_basic"
+			break
+		} else if method == "client_secret_post" {
+			tokenEndpointAuthMethod = "client_secret_post"
+			values.Add("client_id", token.clientID)
+			values.Add("refresh_secret", token.clientSecret)
+			break
+		}
+	}
+
 	tokenRequest, err := http.NewRequest(
 		"POST",
 		token.oidcconfig.TokenEndpoint(),
@@ -120,7 +133,11 @@ func (token *Token) Request() (Response, error) {
 		return Response{}, err
 	}
 	tokenRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	tokenRequest.SetBasicAuth(token.clientID, token.clientSecret)
+
+	if tokenEndpointAuthMethod == "client_secret_basic" {
+		tokenRequest.SetBasicAuth(token.clientID, token.clientSecret)
+	}
+
 	response, err := http.DefaultClient.Do(tokenRequest)
 	defer func() {
 		_, err = io.Copy(ioutil.Discard, response.Body)
