@@ -1,6 +1,7 @@
 package authorization
 
 import (
+	"errors"
 	"net/url"
 	"strings"
 
@@ -128,7 +129,21 @@ func (authorization *Authorization) GenerateURL() (string, error) {
 	q := u.Query()
 	q.Set("client_id", authorization.clientID)
 	q.Set("redirect_uri", authorization.redirectURI)
+
+	if len(authorization.oidcconfig.ResponseTypesSupported()) > 0 && !validateResponseType(
+		authorization.responseType,
+		authorization.oidcconfig.ResponseTypesSupported(),
+	) {
+		return "", errors.New("unsupported response_type")
+	}
 	q.Set("response_type", strings.Join(authorization.responseType, " "))
+
+	if len(authorization.oidcconfig.ScopesSupported()) > 0 && !validateScope(
+		authorization.scope,
+		authorization.oidcconfig.ScopesSupported(),
+	) {
+		return "", errors.New("unsupported scope")
+	}
 	q.Set("scope", strings.Join(authorization.scope, " "))
 
 	if authorization.state != "" {
