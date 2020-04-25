@@ -7,8 +7,11 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+	"time"
 
+	"github.com/kura-lab/go-openid-connect-client/pkg/hash"
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
+	mystring "github.com/kura-lab/go-openid-connect-client/pkg/strings"
 )
 
 // Header is struct for decoded ID Token Header.
@@ -25,7 +28,7 @@ type Payload struct {
 	Audience                       []string
 	RawAudience                    json.RawMessage `json:"aud"`
 	Expiration                     int             `json:"exp"`
-	IssueAt                        int             `json:"iat"`
+	IssuedAt                       int             `json:"iat"`
 	AuthTime                       int             `json:"auth_time"`
 	Nonce                          string          `json:"nonce"`
 	AuthenticationMethodReference  []string        `json:"amr"`
@@ -35,16 +38,19 @@ type Payload struct {
 
 // IDToken is struct for ID Token.
 type IDToken struct {
-	oidcconfig       *oidcconfig.OIDCConfig
-	iDTokenParts     []string
-	iDTokenHeader    *Header
-	iDTokenPayload   *Payload
-	decodedSignature []byte
+	oidcconfig                         *oidcconfig.OIDCConfig
+	iDTokenParts                       []string
+	iDTokenHeader                      *Header
+	iDTokenPayload                     *Payload
+	decodedSignature                   []byte
+	expectedIssuer                     string
+	expectedAudience                   string
+	expectedNonce                      string
+	expectedDurationIssueAt            int
+	expectedAccessTokenAccessTokenHash string
 }
 
 // NewIDToken is IDToken constructor function.
-//TBD
-//func NewIDToken(oidcconfig *oidcconfig.OIDCConfig, rawIDToken string, options ...Option) *IDToken {
 func NewIDToken(oidcconfig *oidcconfig.OIDCConfig, rawIDToken string) (*IDToken, error) {
 	iDToken := new(IDToken)
 	iDToken.oidcconfig = oidcconfig
@@ -89,22 +95,8 @@ func NewIDToken(oidcconfig *oidcconfig.OIDCConfig, rawIDToken string) (*IDToken,
 	}
 	iDToken.decodedSignature = decodedSignature
 
-	//TBD
-	//for _, option := range options {
-	//	option(token)
-	//}
 	return iDToken, nil
 }
-
-//TBD
-//type Option func(*Token) error
-//
-//func GrantType(grantType string) Option {
-//	return func(token *Token) error {
-//		token.grantType = grantType
-//		return nil
-//	}
-//}
 
 // VerifyIDTokenHeader is method to verify ID Token Header.
 func (iDToken *IDToken) VerifyIDTokenHeader() error {
@@ -137,8 +129,90 @@ func (iDToken *IDToken) VerifySignature(publicKey rsa.PublicKey) error {
 	return err
 }
 
+// Option is functional option for VerifyPayload function initialization.
+type Option func(*IDToken) error
+
+// Issuer is functional option to add expected issuer.
+func Issuer() Option {
+	return func(iDToken *IDToken) error {
+		iDToken.expectedIssuer = iDToken.oidcconfig.Issuer()
+		return nil
+	}
+}
+
+// Audience is functional option to add expected audience.
+func Audience(audience string) Option {
+	return func(iDToken *IDToken) error {
+		iDToken.expectedAudience = audience
+		return nil
+	}
+}
+
+// Nonce is functional option to add expected nonce.
+func Nonce(nonce string) Option {
+	return func(iDToken *IDToken) error {
+		iDToken.expectedNonce = nonce
+		return nil
+	}
+}
+
+// IssuedAt is functional option to add expected duration of issued at.
+func DurationIssuedAt(duration int) Option {
+	return func(iDToken *IDToken) error {
+		iDToken.expectedDurationIssueAt = duration
+		return nil
+	}
+}
+
+// AccessTokenAccessTokenHash is functional option to add expected access token of access token hash.
+func AccessTokenAccessTokenHash(accessToken string) Option {
+	return func(iDToken *IDToken) error {
+		iDToken.expectedAccessTokenAccessTokenHash = accessToken
+		return nil
+	}
+}
+
+// VerifyPayloadClaims is method to verify claims included ID Token payload.
+func (iDToken *IDToken) VerifyPayloadClaims(options ...Option) error {
+	for _, option := range options {
+		option(iDToken)
+	}
+
+	if iDToken.expectedIssuer != "" {
+		if iDToken.expectedIssuer != iDToken.iDTokenPayload.Issuer {
+			return errors.New("invalid issuer")
+		}
+	}
+
+	if iDToken.expectedAudience != "" {
+		if !mystring.Contains(iDToken.expectedAudience, iDToken.iDTokenPayload.Audience) {
+			return errors.New("invalid audience")
+		}
+	}
+
+	if iDToken.expectedNonce != "" {
+		if iDToken.expectedNonce != iDToken.iDTokenPayload.Nonce {
+			return errors.New("invalid nonce")
+		}
+	}
+
+	if iDToken.expectedDurationIssueAt != 0 {
+		if int(time.Now().Unix())-iDToken.iDTokenPayload.IssuedAt > iDToken.expectedDurationIssueAt {
+			return errors.New("iat is too far away from current time")
+		}
+	}
+
+	if iDToken.expectedAccessTokenAccessTokenHash != "" {
+		aTHash := hash.GenerateHalfOfSHA256(iDToken.expectedAccessTokenAccessTokenHash)
+		if aTHash != iDToken.iDTokenPayload.AccessTokenHash {
+			return errors.New("invalid access token hash")
+		}
+	}
+
+	return nil
+}
+
 // GetIDTokenPayload is method to getter of Payload struct.
-//TBD
 func (iDToken *IDToken) GetIDTokenPayload() *Payload {
 	return iDToken.iDTokenPayload
 }
