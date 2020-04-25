@@ -138,6 +138,12 @@ func (authorization *Authorization) GenerateURL() (string, error) {
 	}
 	q.Set("response_type", strings.Join(authorization.responseType, " "))
 
+	if len(authorization.oidcconfig.ScopesSupported()) > 0 && !validateScope(
+		authorization.scope,
+		authorization.oidcconfig.ScopesSupported(),
+	) {
+		return "", errors.New("unsupported scope")
+	}
 	q.Set("scope", strings.Join(authorization.scope, " "))
 
 	if authorization.state != "" {
@@ -201,4 +207,16 @@ func validateResponseType(responseTypes []string, responseTypesSupported []strin
 	}
 
 	return exacted
+}
+
+func validateScope(scopes []string, scopesSupported []string) bool {
+	for _, scope := range scopes {
+		if contains(scope, scopesSupported) {
+			continue
+		} else {
+			return false
+		}
+	}
+
+	return true
 }
