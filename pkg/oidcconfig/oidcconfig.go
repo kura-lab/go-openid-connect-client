@@ -10,25 +10,27 @@ import (
 
 // Response is struct for OpenID Configuration Response.
 type Response struct {
-	Issuer                 string   `json:"issuer"`
-	AuthorizationEndpoint  string   `json:"authorization_endpoint"`
-	TokenEndpoint          string   `json:"token_endpoint"`
-	UserInfoEndpoint       string   `json:"userinfo_endpoint"`
-	JWKsURI                string   `json:"jwks_uri"`
-	ResponseTypesSupported []string `json:"response_types_supported"`
-	ScopesSupported        []string `json:"scopes_supported"`
+	Issuer                            string   `json:"issuer"`
+	AuthorizationEndpoint             string   `json:"authorization_endpoint"`
+	TokenEndpoint                     string   `json:"token_endpoint"`
+	UserInfoEndpoint                  string   `json:"userinfo_endpoint"`
+	JWKsURI                           string   `json:"jwks_uri"`
+	TokenEndpointAuthMethodsSupported []string `json:"token_endpoint_auth_methods_supported"`
+	ResponseTypesSupported            []string `json:"response_types_supported"`
+	ScopesSupported                   []string `json:"scopes_supported"`
 }
 
 // OIDCConfig is struct to request OpenID Configuration Endpoint.
 type OIDCConfig struct {
-	uRL                    string
-	issuer                 string
-	authorizationEndpoint  string
-	tokenEndpoint          string
-	userInfoEndpoint       string
-	jWKsURI                string
-	responseTypesSupported []string
-	scopesSupported        []string
+	uRL                               string
+	issuer                            string
+	authorizationEndpoint             string
+	tokenEndpoint                     string
+	userInfoEndpoint                  string
+	jWKsURI                           string
+	tokenEndpointAuthMethodsSupported []string
+	responseTypesSupported            []string
+	scopesSupported                   []string
 }
 
 // New is OIDCConfig constructor function.
@@ -90,6 +92,14 @@ func JWKsURI(jWKsURI string) Option {
 	}
 }
 
+// TokenEndpointAuthMethodsSupported is functional option to add Token Endpoint Authentication Methods Supported.
+func TokenEndpointAuthMethodsSupported(tokenEndpointAuthMethodsSupported []string) Option {
+	return func(config *OIDCConfig) error {
+		config.tokenEndpointAuthMethodsSupported = tokenEndpointAuthMethodsSupported
+		return nil
+	}
+}
+
 // Issuer is getter of issuer.
 func (config *OIDCConfig) Issuer() string {
 	return config.issuer
@@ -113,6 +123,11 @@ func (config *OIDCConfig) UserInfoEndpoint() string {
 // JWKsURI is getter of JWKs URI.
 func (config *OIDCConfig) JWKsURI() string {
 	return config.jWKsURI
+}
+
+// TokenEndpointAuthMethodsSupported is getter of Token Endpoint Authentication Methods Supported.
+func (config *OIDCConfig) TokenEndpointAuthMethodsSupported() []string {
+	return config.tokenEndpointAuthMethodsSupported
 }
 
 // ResponseTypesSupported is getter of response types supported.
@@ -171,6 +186,9 @@ func (config *OIDCConfig) Request() error {
 	}
 	if configResponse.JWKsURI != "" {
 		config.jWKsURI = configResponse.JWKsURI
+	}
+	if len(configResponse.TokenEndpointAuthMethodsSupported) > 0 {
+		config.tokenEndpointAuthMethodsSupported = configResponse.TokenEndpointAuthMethodsSupported
 	}
 	if len(configResponse.ResponseTypesSupported) > 0 {
 		config.responseTypesSupported = configResponse.ResponseTypesSupported
