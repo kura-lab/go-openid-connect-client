@@ -122,11 +122,11 @@ func (iDToken *IDToken) GetIDTokenHeader() *Header {
 func (iDToken *IDToken) VerifySignature(publicKey rsa.PublicKey) error {
 
 	var hashType crypto.Hash
-	if iDToken.iDTokenHeader.Algorithm == "RS256" {
+	if iDToken.iDTokenHeader.Algorithm == "RS256" || iDToken.iDTokenHeader.Algorithm == "PS256" {
 		hashType = crypto.SHA256
-	} else if iDToken.iDTokenHeader.Algorithm == "RS384" {
+	} else if iDToken.iDTokenHeader.Algorithm == "RS384" || iDToken.iDTokenHeader.Algorithm == "PS384" {
 		hashType = crypto.SHA384
-	} else if iDToken.iDTokenHeader.Algorithm == "RS512" {
+	} else if iDToken.iDTokenHeader.Algorithm == "RS512" || iDToken.iDTokenHeader.Algorithm == "PS512" {
 		hashType = crypto.SHA512
 	} else {
 		return errors.New("unsupported signing algorithm by this library")
