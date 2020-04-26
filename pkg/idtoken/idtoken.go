@@ -120,14 +120,26 @@ func (iDToken *IDToken) GetIDTokenHeader() *Header {
 
 // VerifySignature is method to verify ID Token signature.
 func (iDToken *IDToken) VerifySignature(publicKey rsa.PublicKey) error {
-	hash := crypto.Hash.New(crypto.SHA256)
+
+	var hashType uint
+	if iDToken.iDTokenHeader.Algorithm == "RS256" {
+		hashType = crypto.SHA256
+	} else if iDToken.iDTokenHeader.Algorithm == "RS384" {
+		hashType = crypto.SHA384
+	} else if iDToken.iDTokenHeader.Algorithm == "RS512" {
+		hashType = crypto.SHA512
+	} else {
+		return errors.New("unsupported signing algorithm by this library")
+	}
+
+	hash := crypto.Hash.New(hashType)
 	_, err := hash.Write([]byte(iDToken.iDTokenParts[0] + "." + iDToken.iDTokenParts[1]))
 	if err != nil {
 		return err
 	}
 	hashed := hash.Sum(nil)
 
-	err = rsa.VerifyPKCS1v15(&publicKey, crypto.SHA256, hashed, iDToken.decodedSignature)
+	err = rsa.VerifyPKCS1v15(&publicKey, hashType, hashed, iDToken.decodedSignature)
 
 	return err
 }
