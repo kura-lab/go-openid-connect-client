@@ -133,13 +133,21 @@ func (iDToken *IDToken) VerifySignature(publicKey rsa.PublicKey) error {
 	}
 
 	hash := crypto.Hash.New(hashType)
-	_, err := hash.Write([]byte(iDToken.iDTokenParts[0] + "." + iDToken.iDTokenParts[1]))
-	if err != nil {
+	if _, err := hash.Write([]byte(iDToken.iDTokenParts[0] + "." + iDToken.iDTokenParts[1])); err != nil {
 		return err
 	}
 	hashed := hash.Sum(nil)
 
-	err = rsa.VerifyPKCS1v15(&publicKey, hashType, hashed, iDToken.decodedSignature)
+	var err error
+	if iDToken.iDTokenHeader.Algorithm == "RS256" ||
+		iDToken.iDTokenHeader.Algorithm == "RS384" ||
+		iDToken.iDTokenHeader.Algorithm == "RS512" {
+		err = rsa.VerifyPKCS1v15(&publicKey, hashType, hashed, iDToken.decodedSignature)
+	} else if iDToken.iDTokenHeader.Algorithm == "PS256" ||
+		iDToken.iDTokenHeader.Algorithm == "PS384" ||
+		iDToken.iDTokenHeader.Algorithm == "PS512" {
+		err = rsa.VerifyPSS(&publicKey, hashType, hashed, iDToken.decodedSignature, nil)
+	}
 
 	return err
 }
