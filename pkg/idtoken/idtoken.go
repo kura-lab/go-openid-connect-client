@@ -121,7 +121,7 @@ func (iDToken *IDToken) GetIDTokenHeader() *Header {
 // VerifySignature is method to verify ID Token signature.
 func (iDToken *IDToken) VerifySignature(publicKey rsa.PublicKey) error {
 
-	var hashType uint
+	var hashType crypto.Hash
 	if iDToken.iDTokenHeader.Algorithm == "RS256" {
 		hashType = crypto.SHA256
 	} else if iDToken.iDTokenHeader.Algorithm == "RS384" {
