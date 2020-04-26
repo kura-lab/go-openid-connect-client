@@ -103,7 +103,10 @@ func (iDToken *IDToken) VerifyIDTokenHeader() error {
 	if iDToken.iDTokenHeader.Type != "JWT" {
 		return errors.New("unsupported header type")
 	}
-	if iDToken.iDTokenHeader.Algorithm != "RS256" {
+	if !mystring.Contains(
+		iDToken.iDTokenHeader.Algorithm,
+		iDToken.oidcconfig.IDTokenSigningAlgValuesSupported(),
+	) {
 		return errors.New("unsupported signature algorithm")
 	}
 
