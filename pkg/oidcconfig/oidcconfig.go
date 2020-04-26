@@ -18,6 +18,7 @@ type Response struct {
 	TokenEndpointAuthMethodsSupported []string `json:"token_endpoint_auth_methods_supported"`
 	ResponseTypesSupported            []string `json:"response_types_supported"`
 	ScopesSupported                   []string `json:"scopes_supported"`
+	IDTokenSigningAlgValuesSupported  []string `json:"id_token_signing_alg_values_supported"`
 }
 
 // OIDCConfig is struct to request OpenID Configuration Endpoint.
@@ -31,6 +32,7 @@ type OIDCConfig struct {
 	tokenEndpointAuthMethodsSupported []string
 	responseTypesSupported            []string
 	scopesSupported                   []string
+	iDTokenSigningAlgValuesSupported  []string
 }
 
 // New is OIDCConfig constructor function.
@@ -140,6 +142,11 @@ func (config *OIDCConfig) ScopesSupported() []string {
 	return config.scopesSupported
 }
 
+// IDTokenSigningAlgValuesSupported is getter of id token signing alg values supporte.
+func (config *OIDCConfig) IDTokenSigningAlgValuesSupported() []string {
+	return config.iDTokenSigningAlgValuesSupported
+}
+
 // Request is method to request OpenID Configuration Endpoint.
 func (config *OIDCConfig) Request() error {
 	configRequest, err := http.NewRequest(
@@ -195,6 +202,9 @@ func (config *OIDCConfig) Request() error {
 	}
 	if len(configResponse.ScopesSupported) > 0 {
 		config.scopesSupported = configResponse.ScopesSupported
+	}
+	if len(configResponse.IDTokenSigningAlgValuesSupported) > 0 {
+		config.iDTokenSigningAlgValuesSupported = configResponse.IDTokenSigningAlgValuesSupported
 	}
 
 	return nil
