@@ -1,15 +1,22 @@
 package idtoken
 
 import (
+	"bytes"
 	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rsa"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
+	"hash"
+	"math/big"
 	"strings"
 	"time"
 
-	"github.com/kura-lab/go-openid-connect-client/pkg/hash"
+	myhash "github.com/kura-lab/go-openid-connect-client/pkg/hash"
+	"github.com/kura-lab/go-openid-connect-client/pkg/jwks"
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 	mystring "github.com/kura-lab/go-openid-connect-client/pkg/strings"
 )
@@ -119,16 +126,119 @@ func (iDToken *IDToken) GetIDTokenHeader() *Header {
 }
 
 // VerifySignature is method to verify ID Token signature.
-func (iDToken *IDToken) VerifySignature(publicKey rsa.PublicKey) error {
+func (iDToken *IDToken) VerifySignature(jWKsResponse jwks.Response) error {
+	switch iDToken.iDTokenHeader.Algorithm {
+	case "RS256", "RS384", "RS512", "PS256", "PS384", "PS512":
+		publicKey, err := iDToken.generateRSAPublicKey(jWKsResponse)
+		if err != nil {
+			return err
+		}
+		return iDToken.verifyRSASignature(publicKey)
+	case "ES256", "ES384", "ES512":
+		publicKey, err := iDToken.generateECDSAPublicKey(jWKsResponse)
+		if err != nil {
+			return err
+		}
+		return iDToken.verifyECDSASignature(publicKey)
+	}
 
-	var hashType crypto.Hash
-	if iDToken.iDTokenHeader.Algorithm == "RS256" || iDToken.iDTokenHeader.Algorithm == "PS256" {
-		hashType = crypto.SHA256
-	} else if iDToken.iDTokenHeader.Algorithm == "RS384" || iDToken.iDTokenHeader.Algorithm == "PS384" {
-		hashType = crypto.SHA384
-	} else if iDToken.iDTokenHeader.Algorithm == "RS512" || iDToken.iDTokenHeader.Algorithm == "PS512" {
-		hashType = crypto.SHA512
+	return errors.New("failed to verify signature")
+}
+
+func (iDToken *IDToken) generateRSAPublicKey(jWKsResponse jwks.Response) (rsa.PublicKey, error) {
+	var modulus, exponent string
+	for _, keySet := range jWKsResponse.KeySets {
+		if keySet.KeyID == iDToken.iDTokenHeader.KeyID {
+			if keySet.Use != "sig" || keySet.KeyType != "RSA" || keySet.Algorithm != iDToken.iDTokenHeader.Algorithm {
+				return rsa.PublicKey{}, errors.New("invalid use, key type or algorithm")
+			}
+			modulus = keySet.Modulus
+			exponent = keySet.Exponent
+			break
+		}
+	}
+	if modulus == "" || exponent == "" {
+		return rsa.PublicKey{}, errors.New("failed to extract modulus or exponent")
+	}
+
+	decodedModulus, err := base64.RawURLEncoding.DecodeString(modulus)
+	if err != nil {
+		return rsa.PublicKey{}, err
+	}
+	decodedExponent, err := base64.StdEncoding.DecodeString(exponent)
+	if err != nil {
+		return rsa.PublicKey{}, err
+	}
+	var exponentBytes []byte
+	if len(decodedExponent) < 8 {
+		exponentBytes = make([]byte, 8-len(decodedExponent), 8)
+		exponentBytes = append(exponentBytes, decodedExponent...)
 	} else {
+		exponentBytes = decodedExponent
+	}
+	reader := bytes.NewReader(exponentBytes)
+	var e uint64
+	err = binary.Read(reader, binary.BigEndian, &e)
+	if err != nil {
+		return rsa.PublicKey{}, err
+	}
+
+	return rsa.PublicKey{N: big.NewInt(0).SetBytes(decodedModulus), E: int(e)}, nil
+}
+
+func (iDToken *IDToken) generateECDSAPublicKey(jWKsResponse jwks.Response) (ecdsa.PublicKey, error) {
+	var encodedX, encodedY string
+	for _, keySet := range jWKsResponse.KeySets {
+		if keySet.KeyID == iDToken.iDTokenHeader.KeyID {
+			if keySet.Use != "sig" || keySet.KeyType != "EC" || keySet.Algorithm != iDToken.iDTokenHeader.Algorithm {
+				return ecdsa.PublicKey{}, errors.New("invalid use, key type or algorithm")
+			}
+			encodedX = keySet.XCoordinate
+			encodedY = keySet.YCoordinate
+			break
+		}
+	}
+	if encodedX == "" || encodedY == "" {
+		return ecdsa.PublicKey{}, errors.New("failed to extract x or y coordinate")
+	}
+
+	decodedX, err := base64.RawURLEncoding.DecodeString(encodedX)
+	if err != nil {
+		return ecdsa.PublicKey{}, err
+	}
+	decodedY, err := base64.StdEncoding.DecodeString(encodedY)
+	if err != nil {
+		return ecdsa.PublicKey{}, err
+	}
+
+	var x, y *big.Int
+	x = x.SetBytes(decodedX)
+	y = y.SetBytes(decodedY)
+
+	var curve elliptic.Curve
+	if iDToken.iDTokenHeader.Algorithm == "ES256" {
+		curve = elliptic.P256()
+	} else if iDToken.iDTokenHeader.Algorithm == "ES384" {
+		curve = elliptic.P384()
+	} else if iDToken.iDTokenHeader.Algorithm == "ES512" {
+		curve = elliptic.P521()
+	} else {
+		return ecdsa.PublicKey{}, errors.New("unsupported id token signing algorithm")
+	}
+
+	return ecdsa.PublicKey{Curve: curve, X: x, Y: y}, nil
+}
+
+func (iDToken *IDToken) verifyRSASignature(publicKey rsa.PublicKey) error {
+	var hashType crypto.Hash
+	switch iDToken.iDTokenHeader.Algorithm {
+	case "RS256", "PS256":
+		hashType = crypto.SHA256
+	case "RS384", "PS384":
+		hashType = crypto.SHA384
+	case "RS512", "PS512":
+		hashType = crypto.SHA512
+	default:
 		return errors.New("unsupported signing algorithm by this library")
 	}
 
@@ -136,20 +246,44 @@ func (iDToken *IDToken) VerifySignature(publicKey rsa.PublicKey) error {
 	if _, err := hash.Write([]byte(iDToken.iDTokenParts[0] + "." + iDToken.iDTokenParts[1])); err != nil {
 		return err
 	}
-	hashed := hash.Sum(nil)
 
-	var err error
-	if iDToken.iDTokenHeader.Algorithm == "RS256" ||
-		iDToken.iDTokenHeader.Algorithm == "RS384" ||
-		iDToken.iDTokenHeader.Algorithm == "RS512" {
-		err = rsa.VerifyPKCS1v15(&publicKey, hashType, hashed, iDToken.decodedSignature)
-	} else if iDToken.iDTokenHeader.Algorithm == "PS256" ||
-		iDToken.iDTokenHeader.Algorithm == "PS384" ||
-		iDToken.iDTokenHeader.Algorithm == "PS512" {
-		err = rsa.VerifyPSS(&publicKey, hashType, hashed, iDToken.decodedSignature, nil)
+	switch iDToken.iDTokenHeader.Algorithm {
+	case "RS256", "RS384", "RS512":
+		return rsa.VerifyPKCS1v15(&publicKey, hashType, hash.Sum(nil), iDToken.decodedSignature)
+	case "PS256", "PS384", "PS512":
+		return rsa.VerifyPSS(&publicKey, hashType, hash.Sum(nil), iDToken.decodedSignature, nil)
 	}
 
-	return err
+	return errors.New("unexpected varification error")
+}
+
+func (iDToken *IDToken) verifyECDSASignature(publicKey ecdsa.PublicKey) error {
+	var keySize int
+	var hash hash.Hash
+	switch iDToken.iDTokenHeader.Algorithm {
+	case "ES256":
+		keySize = 32
+		hash = crypto.SHA256.New()
+	case "ES384":
+		keySize = 48
+		hash = crypto.SHA384.New()
+	case "ES512":
+		keySize = 66
+		hash = crypto.SHA512.New()
+	}
+
+	if _, err := hash.Write([]byte(iDToken.iDTokenParts[0] + "." + iDToken.iDTokenParts[1])); err != nil {
+		return err
+	}
+
+	parsedR := big.NewInt(0).SetBytes(iDToken.decodedSignature[:keySize])
+	parsedS := big.NewInt(0).SetBytes(iDToken.decodedSignature[keySize:])
+
+	if !ecdsa.Verify(&publicKey, hash.Sum(nil), parsedR, parsedS) {
+		return errors.New("invalid ecdsa signature")
+	}
+
+	return nil
 }
 
 // Option is functional option for VerifyPayload function initialization.
@@ -226,7 +360,7 @@ func (iDToken *IDToken) VerifyPayloadClaims(options ...Option) error {
 	}
 
 	if iDToken.expectedAccessTokenAccessTokenHash != "" {
-		aTHash := hash.GenerateHalfOfSHA256(iDToken.expectedAccessTokenAccessTokenHash)
+		aTHash := myhash.GenerateHalfOfSHA256(iDToken.expectedAccessTokenAccessTokenHash)
 		if aTHash != iDToken.iDTokenPayload.AccessTokenHash {
 			return errors.New("invalid access token hash")
 		}
