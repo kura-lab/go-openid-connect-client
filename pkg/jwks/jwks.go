@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
@@ -45,14 +44,8 @@ func (jWKs *JWKs) Request() (Response, error) {
 		return Response{}, err
 	}
 	defer func() {
-		_, err = io.Copy(ioutil.Discard, response.Body)
-		if err != nil {
-			log.Panic(err)
-		}
-		err = response.Body.Close()
-		if err != nil {
-			log.Panic(err)
-		}
+		io.Copy(ioutil.Discard, response.Body)
+		response.Body.Close()
 	}()
 
 	var jWKsResponse Response
