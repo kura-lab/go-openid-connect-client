@@ -11,7 +11,9 @@ import (
 
 // Response is struct for JWKs URI Response.
 type Response struct {
-	KeySets []struct {
+	Status     string
+	StatusCode int
+	KeySets    []struct {
 		KeyID       string `json:"kid"`
 		KeyType     string `json:"kty"`
 		Algorithm   string `json:"alg"`
@@ -27,6 +29,7 @@ type Response struct {
 // JWKs is struct to request JWKs URI.
 type JWKs struct {
 	oidcconfig *oidcconfig.OIDCConfig
+	response   Response
 }
 
 // NewJWKs is JWKs URI constructor function.
@@ -38,10 +41,10 @@ func NewJWKs(oidcconfig *oidcconfig.OIDCConfig) *JWKs {
 }
 
 // Request is method to request JWKs URI.
-func (jWKs *JWKs) Request() (Response, error) {
+func (jWKs *JWKs) Request() error {
 	response, err := http.Get(jWKs.oidcconfig.JWKsURI())
 	if err != nil {
-		return Response{}, err
+		return err
 	}
 	defer func() {
 		io.Copy(ioutil.Discard, response.Body)
@@ -51,8 +54,16 @@ func (jWKs *JWKs) Request() (Response, error) {
 	var jWKsResponse Response
 	err = json.NewDecoder(response.Body).Decode(&jWKsResponse)
 	if err != nil {
-		return Response{}, err
+		return err
 	}
+	jWKsResponse.Status = response.Status
+	jWKsResponse.StatusCode = response.StatusCode
+	jWKs.response = jWKsResponse
 
-	return jWKsResponse, nil
+	return nil
+}
+
+// Response is getter method of Response struct
+func (jWKs *JWKs) Response() Response {
+	return jWKs.response
 }

@@ -11,6 +11,8 @@ import (
 
 // Response is struct for UserInfo Response.
 type Response struct {
+	Status              string
+	StatusCode          int
 	Subject             string `json:"sub"`
 	Name                string `json:"name"`
 	GivenName           string `json:"given_name"`
@@ -43,6 +45,7 @@ type Response struct {
 // UserInfo is struct to request UserInfo Endpoint.
 type UserInfo struct {
 	oidcconfig *oidcconfig.OIDCConfig
+	response   Response
 	// required
 	accessToken string
 }
@@ -63,7 +66,7 @@ func NewUserInfo(oidcconfig *oidcconfig.OIDCConfig, accessToken string, options 
 type Option func(*UserInfo) error
 
 // Request is method to request UserInfo Endpoint.
-func (userInfo *UserInfo) Request() (Response, error) {
+func (userInfo *UserInfo) Request() error {
 
 	userInfoRequest, err := http.NewRequest(
 		"POST",
@@ -71,7 +74,7 @@ func (userInfo *UserInfo) Request() (Response, error) {
 		nil,
 	)
 	if err != nil {
-		return Response{}, err
+		return err
 	}
 
 	userInfoRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -83,14 +86,22 @@ func (userInfo *UserInfo) Request() (Response, error) {
 	}()
 
 	if err != nil {
-		return Response{}, err
+		return err
 	}
 
 	var userInfoResponse Response
 	err = json.NewDecoder(response.Body).Decode(&userInfoResponse)
 	if err != nil {
-		return Response{}, err
+		return err
 	}
+	userInfoResponse.Status = response.Status
+	userInfoResponse.StatusCode = response.StatusCode
+	userInfo.response = userInfoResponse
 
-	return userInfoResponse, nil
+	return nil
+}
+
+// Response is getter method of Response struct
+func (userInfo *UserInfo) Response() Response {
+	return userInfo.response
 }

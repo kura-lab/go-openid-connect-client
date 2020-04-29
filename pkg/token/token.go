@@ -13,6 +13,8 @@ import (
 
 // Response is struct for Token Response.
 type Response struct {
+	Status       string
+	StatusCode   int
 	AccessToken  string `json:"access_token"`
 	TokenType    string `json:"token_type"`
 	RefreshToken string `json:"refresh_token"`
@@ -23,6 +25,7 @@ type Response struct {
 // Token is struct to request Token Endpoint.
 type Token struct {
 	oidcconfig *oidcconfig.OIDCConfig
+	response   Response
 	// required
 	clientID     string
 	clientSecret string
@@ -93,7 +96,7 @@ func RefreshToken(refreshToken string) Option {
 }
 
 // Request is method to request Token Endpoint.
-func (token *Token) Request() (Response, error) {
+func (token *Token) Request() error {
 	values := url.Values{}
 	values.Set("grant_type", token.grantType)
 
@@ -129,7 +132,7 @@ func (token *Token) Request() (Response, error) {
 		strings.NewReader(values.Encode()),
 	)
 	if err != nil {
-		return Response{}, err
+		return err
 	}
 	tokenRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
@@ -144,14 +147,22 @@ func (token *Token) Request() (Response, error) {
 	}()
 
 	if err != nil {
-		return Response{}, err
+		return err
 	}
 
 	var tokenResponse Response
 	err = json.NewDecoder(response.Body).Decode(&tokenResponse)
 	if err != nil {
-		return Response{}, err
+		return err
 	}
+	tokenResponse.Status = response.Status
+	tokenResponse.StatusCode = response.StatusCode
+	token.response = tokenResponse
 
-	return tokenResponse, nil
+	return nil
+}
+
+// Response is getter method of Response struct.
+func (token *Token) Response() Response {
+	return token.response
 }
