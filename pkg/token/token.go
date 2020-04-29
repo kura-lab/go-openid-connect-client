@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -140,14 +139,8 @@ func (token *Token) Request() (Response, error) {
 
 	response, err := http.DefaultClient.Do(tokenRequest)
 	defer func() {
-		_, err = io.Copy(ioutil.Discard, response.Body)
-		if err != nil {
-			log.Panic(err)
-		}
-		err = response.Body.Close()
-		if err != nil {
-			log.Panic(err)
-		}
+		io.Copy(ioutil.Discard, response.Body)
+		response.Body.Close()
 	}()
 
 	if err != nil {

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 )
 
@@ -159,14 +158,8 @@ func (config *OIDCConfig) Request() error {
 	}
 	response, err := http.DefaultClient.Do(configRequest)
 	defer func() {
-		_, err = io.Copy(ioutil.Discard, response.Body)
-		if err != nil {
-			log.Panic(err)
-		}
-		err = response.Body.Close()
-		if err != nil {
-			log.Panic(err)
-		}
+		io.Copy(ioutil.Discard, response.Body)
+		response.Body.Close()
 	}()
 
 	if err != nil {

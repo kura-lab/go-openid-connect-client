@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
@@ -79,14 +78,8 @@ func (userInfo *UserInfo) Request() (Response, error) {
 	userInfoRequest.Header.Set("Authorization", "Bearer "+userInfo.accessToken)
 	response, err := http.DefaultClient.Do(userInfoRequest)
 	defer func() {
-		_, err = io.Copy(ioutil.Discard, response.Body)
-		if err != nil {
-			log.Panic(err)
-		}
-		err = response.Body.Close()
-		if err != nil {
-			log.Panic(err)
-		}
+		io.Copy(ioutil.Discard, response.Body)
+		response.Body.Close()
 	}()
 
 	if err != nil {
