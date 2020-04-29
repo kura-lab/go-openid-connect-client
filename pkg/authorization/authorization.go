@@ -2,6 +2,7 @@ package authorization
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"strings"
 
@@ -134,7 +135,8 @@ func (authorization *Authorization) GenerateURL() (string, error) {
 		authorization.responseType,
 		authorization.oidcconfig.ResponseTypesSupported(),
 	) {
-		return "", errors.New("unsupported response_type")
+		return "", errors.New("unsupported response type. added response type is " + fmt.Sprintf("%v", authorization.responseType) +
+			". expected response type is " + fmt.Sprintf("%v", authorization.oidcconfig.ResponseTypesSupported()))
 	}
 	q.Set("response_type", strings.Join(authorization.responseType, " "))
 
@@ -142,7 +144,8 @@ func (authorization *Authorization) GenerateURL() (string, error) {
 		authorization.scope,
 		authorization.oidcconfig.ScopesSupported(),
 	) {
-		return "", errors.New("unsupported scope")
+		return "", errors.New("unsupported scope. added scope is " + fmt.Sprintf("%v", authorization.scope) +
+			". expected scope is " + fmt.Sprintf("%v", authorization.oidcconfig.ScopesSupported()))
 	}
 	q.Set("scope", strings.Join(authorization.scope, " "))
 
