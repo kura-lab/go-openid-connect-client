@@ -9,6 +9,8 @@ import (
 
 // Response is struct for OpenID Configuration Response.
 type Response struct {
+	Status                            string
+	StatusCode                        int
 	Issuer                            string   `json:"issuer"`
 	AuthorizationEndpoint             string   `json:"authorization_endpoint"`
 	TokenEndpoint                     string   `json:"token_endpoint"`
@@ -22,6 +24,7 @@ type Response struct {
 
 // OIDCConfig is struct to request OpenID Configuration Endpoint.
 type OIDCConfig struct {
+	response                          Response
 	uRL                               string
 	issuer                            string
 	authorizationEndpoint             string
@@ -171,6 +174,9 @@ func (config *OIDCConfig) Request() error {
 	if err != nil {
 		return err
 	}
+	configResponse.Status = response.Status
+	configResponse.StatusCode = response.StatusCode
+	config.response = configResponse
 
 	if configResponse.Issuer != "" {
 		config.issuer = configResponse.Issuer
@@ -201,4 +207,9 @@ func (config *OIDCConfig) Request() error {
 	}
 
 	return nil
+}
+
+// Response is getter method of Response struct.
+func (config *OIDCConfig) Response() Response {
+	return config.response
 }
