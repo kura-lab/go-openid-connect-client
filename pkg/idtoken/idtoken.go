@@ -110,7 +110,7 @@ func NewIDToken(oidcconfig *oidcconfig.OIDCConfig, rawIDToken string) (*IDToken,
 func (iDToken *IDToken) VerifyIDTokenHeader() error {
 	if iDToken.iDTokenHeader.Type != "JWT" {
 		return errors.New("unsupported header type. id token type supported by OpenID Connect is JWT, " +
-			"actual type in id token's header is " + iDToken.iDTokenHeader.Type + ".")
+			"actual type in id token's header is " + iDToken.iDTokenHeader.Type)
 	}
 	if !mystring.Contains(
 		iDToken.iDTokenHeader.Algorithm,
@@ -118,7 +118,7 @@ func (iDToken *IDToken) VerifyIDTokenHeader() error {
 	) {
 		return errors.New("unsupported signature algorithm. actual algorithm in id token's header is " +
 			iDToken.iDTokenHeader.Algorithm + ". supported signing algorithm is " +
-			fmt.Sprintf("%v", iDToken.oidcconfig.IDTokenSigningAlgValuesSupported()) + ".")
+			fmt.Sprintf("%v", iDToken.oidcconfig.IDTokenSigningAlgValuesSupported()))
 	}
 
 	return nil
@@ -147,7 +147,7 @@ func (iDToken *IDToken) VerifySignature(jWKsResponse jwks.Response) error {
 	}
 
 	return errors.New("unsupported signature algorithm. actual algorithm is " +
-		iDToken.iDTokenHeader.Algorithm + ". you should call VerifyIDTokenHeader before call VerifySignature.")
+		iDToken.iDTokenHeader.Algorithm + ". you should call VerifyIDTokenHeader before call VerifySignature")
 }
 
 func (iDToken *IDToken) generateRSAPublicKey(jWKsResponse jwks.Response) (rsa.PublicKey, error) {
@@ -156,11 +156,11 @@ func (iDToken *IDToken) generateRSAPublicKey(jWKsResponse jwks.Response) (rsa.Pu
 		if keySet.KeyID == iDToken.iDTokenHeader.KeyID {
 
 			if keySet.Use != "sig" {
-				return rsa.PublicKey{}, errors.New("invalid use. actual use in JWK set is " + keySet.Use + ". the use should be sig.")
+				return rsa.PublicKey{}, errors.New("invalid use. actual use in JWK set is " + keySet.Use + ". the use should be sig")
 			} else if keySet.KeyType != "RSA" {
-				return rsa.PublicKey{}, errors.New("invalid key type. actual key type in JWK set is " + keySet.KeyType + ". it's not match type in header.")
+				return rsa.PublicKey{}, errors.New("invalid key type. actual key type in JWK set is " + keySet.KeyType + ". it's not match type in header")
 			} else if keySet.Algorithm != iDToken.iDTokenHeader.Algorithm {
-				return rsa.PublicKey{}, errors.New("invalid algorithm. actual algorithm in JWK set is " + keySet.Algorithm + ". it's not match algorithm in header.")
+				return rsa.PublicKey{}, errors.New("invalid algorithm. actual algorithm in JWK set is " + keySet.Algorithm + ". it's not match algorithm in header")
 			}
 
 			modulus = keySet.Modulus
@@ -169,7 +169,7 @@ func (iDToken *IDToken) generateRSAPublicKey(jWKsResponse jwks.Response) (rsa.Pu
 		}
 	}
 	if modulus == "" || exponent == "" {
-		return rsa.PublicKey{}, errors.New("failed to extract modulus or exponent. they might be empty in JWK set.")
+		return rsa.PublicKey{}, errors.New("failed to extract modulus or exponent. they might be empty in JWK set")
 	}
 
 	decodedModulus, err := base64.RawURLEncoding.DecodeString(modulus)
@@ -203,11 +203,11 @@ func (iDToken *IDToken) generateECDSAPublicKey(jWKsResponse jwks.Response) (ecds
 		if keySet.KeyID == iDToken.iDTokenHeader.KeyID {
 
 			if keySet.Use != "sig" {
-				return ecdsa.PublicKey{}, errors.New("invalid use. actual use in JWK set is " + keySet.Use + ". the use should be sig.")
+				return ecdsa.PublicKey{}, errors.New("invalid use. actual use in JWK set is " + keySet.Use + ". the use should be sig")
 			} else if keySet.KeyType != "EC" {
-				return ecdsa.PublicKey{}, errors.New("invalid key type. actual key type in JWK set is " + keySet.KeyType + ". it's not match type in header.")
+				return ecdsa.PublicKey{}, errors.New("invalid key type. actual key type in JWK set is " + keySet.KeyType + ". it's not match type in header")
 			} else if keySet.Algorithm != iDToken.iDTokenHeader.Algorithm {
-				return ecdsa.PublicKey{}, errors.New("invalid algorithm. actual algorithm in JWK set is " + keySet.Algorithm + ". it's not match algorithm in header.")
+				return ecdsa.PublicKey{}, errors.New("invalid algorithm. actual algorithm in JWK set is " + keySet.Algorithm + ". it's not match algorithm in header")
 			}
 
 			encodedX = keySet.XCoordinate
@@ -216,7 +216,7 @@ func (iDToken *IDToken) generateECDSAPublicKey(jWKsResponse jwks.Response) (ecds
 		}
 	}
 	if encodedX == "" || encodedY == "" {
-		return ecdsa.PublicKey{}, errors.New("failed to extract x or y coordinates. they might be empty in JWK set.")
+		return ecdsa.PublicKey{}, errors.New("failed to extract x or y coordinates. they might be empty in JWK set")
 	}
 
 	decodedX, err := base64.RawURLEncoding.DecodeString(encodedX)
@@ -240,7 +240,7 @@ func (iDToken *IDToken) generateECDSAPublicKey(jWKsResponse jwks.Response) (ecds
 	} else if iDToken.iDTokenHeader.Algorithm == "ES512" {
 		curve = elliptic.P521()
 	} else {
-		return ecdsa.PublicKey{}, errors.New("unsupported signature algorithm. actual algorithm in id token's header is " + iDToken.iDTokenHeader.Algorithm + ".")
+		return ecdsa.PublicKey{}, errors.New("unsupported signature algorithm. actual algorithm in id token's header is " + iDToken.iDTokenHeader.Algorithm)
 	}
 
 	return ecdsa.PublicKey{Curve: curve, X: x, Y: y}, nil
@@ -256,7 +256,7 @@ func (iDToken *IDToken) verifyRSASignature(publicKey rsa.PublicKey) error {
 	case "RS512", "PS512":
 		hashType = crypto.SHA512
 	default:
-		return errors.New("unsupported signing algorithm. actual algorithm in id token's header is " + iDToken.iDTokenHeader.Algorithm + ".")
+		return errors.New("unsupported signing algorithm. actual algorithm in id token's header is " + iDToken.iDTokenHeader.Algorithm)
 	}
 
 	hash := crypto.Hash.New(hashType)
@@ -271,7 +271,7 @@ func (iDToken *IDToken) verifyRSASignature(publicKey rsa.PublicKey) error {
 		return rsa.VerifyPSS(&publicKey, hashType, hash.Sum(nil), iDToken.decodedSignature, nil)
 	}
 
-	return errors.New("unexpected varification error. never reach here.")
+	return errors.New("unexpected varification error. never reach here")
 }
 
 func (iDToken *IDToken) verifyECDSASignature(publicKey ecdsa.PublicKey) error {
@@ -297,7 +297,7 @@ func (iDToken *IDToken) verifyECDSASignature(publicKey ecdsa.PublicKey) error {
 	parsedS := big.NewInt(0).SetBytes(iDToken.decodedSignature[keySize:])
 
 	if !ecdsa.Verify(&publicKey, hash.Sum(nil), parsedR, parsedS) {
-		return errors.New("invalid ecdsa signature. the id token might be altered by attakers.")
+		return errors.New("invalid ecdsa signature. the id token might be altered by attakers")
 	}
 
 	return nil
@@ -355,21 +355,21 @@ func (iDToken *IDToken) VerifyPayloadClaims(options ...Option) error {
 	if iDToken.expectedIssuer != "" {
 		if iDToken.expectedIssuer != iDToken.iDTokenPayload.Issuer {
 			return errors.New("invalid issuer. actual isser in id token's payload is " +
-				iDToken.iDTokenPayload.Issuer + ". expected issuer is " + iDToken.expectedIssuer + ".")
+				iDToken.iDTokenPayload.Issuer + ". expected issuer is " + iDToken.expectedIssuer)
 		}
 	}
 
 	if iDToken.expectedAudience != "" {
 		if !mystring.Contains(iDToken.expectedAudience, iDToken.iDTokenPayload.Audience) {
 			return errors.New("invalid audience. actual audience in id token's payload is " +
-				fmt.Sprintf("%v", iDToken.iDTokenPayload.Audience) + ". expected audience is " + iDToken.expectedAudience + ".")
+				fmt.Sprintf("%v", iDToken.iDTokenPayload.Audience) + ". expected audience is " + iDToken.expectedAudience)
 		}
 	}
 
 	if iDToken.expectedNonce != "" {
 		if iDToken.expectedNonce != iDToken.iDTokenPayload.Nonce {
 			return errors.New("invalid nonce. actual nonce in id token's payload is " +
-				iDToken.iDTokenPayload.Nonce + ". attakers might replay attack(playback attack).")
+				iDToken.iDTokenPayload.Nonce + ". attakers might replay attack(playback attack)")
 		}
 	}
 
@@ -378,7 +378,7 @@ func (iDToken *IDToken) VerifyPayloadClaims(options ...Option) error {
 		if currentTime-iDToken.iDTokenPayload.IssuedAt > iDToken.expectedDurationIssuedAt {
 			return errors.New("issued at is too far away from current time. actual issued at in id token's payload is " +
 				fmt.Sprintf("%d", iDToken.iDTokenPayload.IssuedAt) + "(unix timestamp). " +
-				fmt.Sprintf("%d", (currentTime-iDToken.iDTokenPayload.IssuedAt-iDToken.expectedDurationIssuedAt)) + " seconds have passed.")
+				fmt.Sprintf("%d", (currentTime-iDToken.iDTokenPayload.IssuedAt-iDToken.expectedDurationIssuedAt)) + " seconds have passed")
 		}
 	}
 
@@ -386,7 +386,7 @@ func (iDToken *IDToken) VerifyPayloadClaims(options ...Option) error {
 		aTHash := myhash.GenerateHalfOfSHA256(iDToken.expectedAccessTokenAccessTokenHash)
 		if aTHash != iDToken.iDTokenPayload.AccessTokenHash {
 			return errors.New("invalid access token hash. actual hash in id token's payload is " +
-				iDToken.iDTokenPayload.AccessTokenHash + ". expected hash is " + aTHash + ". the access token issued with id token might be altered by attakers.")
+				iDToken.iDTokenPayload.AccessTokenHash + ". expected hash is " + aTHash + ". the access token issued with id token might be altered by attakers")
 		}
 	}
 
