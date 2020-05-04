@@ -27,7 +27,7 @@ type Response struct {
 
 // Token is struct to request Token Endpoint.
 type Token struct {
-	oidcconfig *oidcconfig.OIDCConfig
+	oIDCConfig oidcconfig.Response
 	response   Response
 	// required
 	clientID     string
@@ -42,9 +42,9 @@ type Token struct {
 }
 
 // NewToken is Token constructor function.
-func NewToken(oidcconfig *oidcconfig.OIDCConfig, clientID string, clientSecret string, options ...Option) *Token {
+func NewToken(oIDCConfig oidcconfig.Response, clientID string, clientSecret string, options ...Option) *Token {
 	token := new(Token)
-	token.oidcconfig = oidcconfig
+	token.oIDCConfig = oIDCConfig
 	token.clientID = clientID
 	token.clientSecret = clientSecret
 	token.grantType = "authorization_code"
@@ -117,7 +117,7 @@ func (token *Token) Request() error {
 	}
 
 	tokenEndpointAuthMethod := "client_secret_basic"
-	for _, method := range token.oidcconfig.TokenEndpointAuthMethodsSupported() {
+	for _, method := range token.oIDCConfig.TokenEndpointAuthMethodsSupported {
 		if method == "client_secret_basic" {
 			tokenEndpointAuthMethod = "client_secret_basic"
 			break
@@ -131,7 +131,7 @@ func (token *Token) Request() error {
 
 	tokenRequest, err := http.NewRequest(
 		"POST",
-		token.oidcconfig.TokenEndpoint(),
+		token.oIDCConfig.TokenEndpoint,
 		strings.NewReader(values.Encode()),
 	)
 	if err != nil {

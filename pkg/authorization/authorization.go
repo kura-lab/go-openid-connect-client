@@ -13,7 +13,7 @@ import (
 
 // Authorization is struct to generate Authorization Endpoint URL.
 type Authorization struct {
-	oidcconfig *oidcconfig.OIDCConfig
+	oIDCConfig oidcconfig.Response
 	// required
 	clientID     string
 	redirectURI  string
@@ -31,9 +31,9 @@ type Authorization struct {
 }
 
 // NewAuthorization is Authorization constructor function.
-func NewAuthorization(oidcconfig *oidcconfig.OIDCConfig, clientID string, redirectURI string, options ...Option) *Authorization {
+func NewAuthorization(oIDCConfig oidcconfig.Response, clientID string, redirectURI string, options ...Option) *Authorization {
 	authorization := new(Authorization)
-	authorization.oidcconfig = oidcconfig
+	authorization.oIDCConfig = oIDCConfig
 	authorization.clientID = clientID
 	authorization.redirectURI = redirectURI
 	authorization.responseType = []string{responsetype.Code}
@@ -123,7 +123,7 @@ func AuthenticationContextReferenceValues(authenticationContextReferenceValues s
 // GenerateURL is method to generate Authorization Endpoint URL
 func (authorization *Authorization) GenerateURL() (string, error) {
 
-	u, err := url.Parse(authorization.oidcconfig.AuthorizationEndpoint())
+	u, err := url.Parse(authorization.oIDCConfig.AuthorizationEndpoint)
 	if err != nil {
 		return "", err
 	}
@@ -131,21 +131,21 @@ func (authorization *Authorization) GenerateURL() (string, error) {
 	q.Set("client_id", authorization.clientID)
 	q.Set("redirect_uri", authorization.redirectURI)
 
-	if len(authorization.oidcconfig.ResponseTypesSupported()) > 0 && !validateResponseType(
+	if len(authorization.oIDCConfig.ResponseTypesSupported) > 0 && !validateResponseType(
 		authorization.responseType,
-		authorization.oidcconfig.ResponseTypesSupported(),
+		authorization.oIDCConfig.ResponseTypesSupported,
 	) {
 		return "", errors.New("unsupported response type. added response type is " + fmt.Sprintf("%v", authorization.responseType) +
-			". expected response type is " + fmt.Sprintf("%v", authorization.oidcconfig.ResponseTypesSupported()))
+			". expected response type is " + fmt.Sprintf("%v", authorization.oIDCConfig.ResponseTypesSupported))
 	}
 	q.Set("response_type", strings.Join(authorization.responseType, " "))
 
-	if len(authorization.oidcconfig.ScopesSupported()) > 0 && !validateScope(
+	if len(authorization.oIDCConfig.ScopesSupported) > 0 && !validateScope(
 		authorization.scope,
-		authorization.oidcconfig.ScopesSupported(),
+		authorization.oIDCConfig.ScopesSupported,
 	) {
 		return "", errors.New("unsupported scope. added scope is " + fmt.Sprintf("%v", authorization.scope) +
-			". expected scope is " + fmt.Sprintf("%v", authorization.oidcconfig.ScopesSupported()))
+			". expected scope is " + fmt.Sprintf("%v", authorization.oIDCConfig.ScopesSupported))
 	}
 	q.Set("scope", strings.Join(authorization.scope, " "))
 

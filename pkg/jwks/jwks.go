@@ -28,21 +28,21 @@ type Response struct {
 
 // JWKs is struct to request JWKs URI.
 type JWKs struct {
-	oidcconfig *oidcconfig.OIDCConfig
+	oIDCConfig oidcconfig.Response
 	response   Response
 }
 
 // NewJWKs is JWKs URI constructor function.
-func NewJWKs(oidcconfig *oidcconfig.OIDCConfig) *JWKs {
+func NewJWKs(oIDCConfig oidcconfig.Response) *JWKs {
 	jWKs := new(JWKs)
-	jWKs.oidcconfig = oidcconfig
+	jWKs.oIDCConfig = oIDCConfig
 
 	return jWKs
 }
 
 // Request is method to request JWKs URI.
 func (jWKs *JWKs) Request() error {
-	response, err := http.Get(jWKs.oidcconfig.JWKsURI())
+	response, err := http.Get(jWKs.oIDCConfig.JWKsURI)
 	if err != nil {
 		return err
 	}
