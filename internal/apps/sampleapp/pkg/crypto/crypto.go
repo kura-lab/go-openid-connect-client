@@ -11,18 +11,22 @@ import (
 	myrand "github.com/kura-lab/go-openid-connect-client/internal/apps/sampleapp/pkg/rand"
 )
 
+// GenerateRandomAESKey128bit is function to generate 128 bit Random key for AES.
 func GenerateRandomAESKey128bit() []byte {
 	return []byte(myrand.GenerateRandomString(16))
 }
 
+// GenerateRandomAESKey192bit is function to generate 192 bit Random key for AES.
 func GenerateRandomAESKey192bit() []byte {
 	return []byte(myrand.GenerateRandomString(24))
 }
 
+// GenerateRandomAESKey256bit is function to generate 256 bit Random key for AES.
 func GenerateRandomAESKey256bit() []byte {
 	return []byte(myrand.GenerateRandomString(32))
 }
 
+// EnctyptAESToString is function to encrypt input bytes.
 func EnctyptAESToString(key []byte, src []byte) string {
 	src = padPKCS7(src)
 	block, err := aes.NewCipher(key)
@@ -42,6 +46,7 @@ func EnctyptAESToString(key []byte, src []byte) string {
 	return string(encrypted)
 }
 
+// DecryptAESToString is function to decrypt input bytes.
 func DecryptAESToString(key []byte, iv []byte, src []byte, size int) string {
 	block, err := aes.NewCipher(key)
 	if err != nil {
