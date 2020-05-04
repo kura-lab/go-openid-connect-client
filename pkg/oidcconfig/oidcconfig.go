@@ -104,51 +104,6 @@ func TokenEndpointAuthMethodsSupported(tokenEndpointAuthMethodsSupported []strin
 	}
 }
 
-// Issuer is getter of issuer.
-func (config *OIDCConfig) Issuer() string {
-	return config.issuer
-}
-
-// AuthorizationEndpoint is getter of Authorization Endpoint.
-func (config *OIDCConfig) AuthorizationEndpoint() string {
-	return config.authorizationEndpoint
-}
-
-// TokenEndpoint is getter of Token Endpoint.
-func (config *OIDCConfig) TokenEndpoint() string {
-	return config.tokenEndpoint
-}
-
-// UserInfoEndpoint is getter of UserInfo Endpoint.
-func (config *OIDCConfig) UserInfoEndpoint() string {
-	return config.userInfoEndpoint
-}
-
-// JWKsURI is getter of JWKs URI.
-func (config *OIDCConfig) JWKsURI() string {
-	return config.jWKsURI
-}
-
-// TokenEndpointAuthMethodsSupported is getter of Token Endpoint Authentication Methods Supported.
-func (config *OIDCConfig) TokenEndpointAuthMethodsSupported() []string {
-	return config.tokenEndpointAuthMethodsSupported
-}
-
-// ResponseTypesSupported is getter of response types supported.
-func (config *OIDCConfig) ResponseTypesSupported() []string {
-	return config.responseTypesSupported
-}
-
-// ScopesSupported is getter of scopes supported.
-func (config *OIDCConfig) ScopesSupported() []string {
-	return config.scopesSupported
-}
-
-// IDTokenSigningAlgValuesSupported is getter of id token signing alg values supporte.
-func (config *OIDCConfig) IDTokenSigningAlgValuesSupported() []string {
-	return config.iDTokenSigningAlgValuesSupported
-}
-
 // Request is method to request OpenID Configuration Endpoint.
 func (config *OIDCConfig) Request() error {
 	configRequest, err := http.NewRequest(
