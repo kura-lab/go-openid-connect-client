@@ -74,7 +74,7 @@ func NewUserInfo(oIDCConfig oidcconfig.Response, accessToken string, options ...
 type Option func(*UserInfo) error
 
 // Request is method to request UserInfo Endpoint.
-func (userInfo *UserInfo) Request() error {
+func (userInfo *UserInfo) Request() (nerr error) {
 
 	userInfoRequest, err := http.NewRequest(
 		"POST",
@@ -82,25 +82,34 @@ func (userInfo *UserInfo) Request() error {
 		nil,
 	)
 	if err != nil {
-		return err
+		nerr = err
+		return
 	}
 
 	userInfoRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	userInfoRequest.Header.Set("Authorization", "Bearer "+userInfo.accessToken)
 	response, err := http.DefaultClient.Do(userInfoRequest)
 	defer func() {
-		io.Copy(ioutil.Discard, response.Body)
-		response.Body.Close()
+		if _, err := io.Copy(ioutil.Discard, response.Body); err != nil {
+			nerr = err
+			return
+		}
+		if err := response.Body.Close(); err != nil {
+			nerr = err
+			return
+		}
 	}()
 
 	if err != nil {
-		return err
+		nerr = err
+		return
 	}
 
 	var userInfoResponse Response
 	err = json.NewDecoder(response.Body).Decode(&userInfoResponse)
 	if err != nil {
-		return err
+		nerr = err
+		return
 	}
 	userInfoResponse.Status = response.Status
 	userInfoResponse.StatusCode = response.StatusCode
@@ -122,7 +131,7 @@ func (userInfo *UserInfo) Request() error {
 		}
 	}
 
-	return nil
+	return
 }
 
 // Response is getter method of Response struct

@@ -105,29 +105,38 @@ func TokenEndpointAuthMethodsSupported(tokenEndpointAuthMethodsSupported []strin
 }
 
 // Request is method to request OpenID Configuration Endpoint.
-func (config *OIDCConfig) Request() error {
+func (config *OIDCConfig) Request() (nerr error) {
 	configRequest, err := http.NewRequest(
 		"GET",
 		config.uRL,
 		nil,
 	)
 	if err != nil {
-		return err
+		nerr = err
+		return
 	}
 	response, err := http.DefaultClient.Do(configRequest)
 	defer func() {
-		io.Copy(ioutil.Discard, response.Body)
-		response.Body.Close()
+		if _, err := io.Copy(ioutil.Discard, response.Body); err != nil {
+			nerr = err
+			return
+		}
+		if err := response.Body.Close(); err != nil {
+			nerr = err
+			return
+		}
 	}()
 
 	if err != nil {
-		return err
+		nerr = err
+		return
 	}
 
 	var configResponse Response
 	err = json.NewDecoder(response.Body).Decode(&configResponse)
 	if err != nil {
-		return err
+		nerr = err
+		return
 	}
 	configResponse.Status = response.Status
 	configResponse.StatusCode = response.StatusCode
@@ -161,7 +170,7 @@ func (config *OIDCConfig) Request() error {
 		config.iDTokenSigningAlgValuesSupported = configResponse.IDTokenSigningAlgValuesSupported
 	}
 
-	return nil
+	return
 }
 
 // Response is getter method of Response struct.
