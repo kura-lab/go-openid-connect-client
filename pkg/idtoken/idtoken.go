@@ -46,7 +46,7 @@ type Payload struct {
 
 // IDToken is struct for ID Token.
 type IDToken struct {
-	oidcconfig                         *oidcconfig.OIDCConfig
+	oIDCConfig                         oidcconfig.Response
 	iDTokenParts                       []string
 	iDTokenHeader                      *Header
 	iDTokenPayload                     *Payload
@@ -59,9 +59,9 @@ type IDToken struct {
 }
 
 // NewIDToken is IDToken constructor function.
-func NewIDToken(oidcconfig *oidcconfig.OIDCConfig, rawIDToken string) (*IDToken, error) {
+func NewIDToken(oIDCConfig oidcconfig.Response, rawIDToken string) (*IDToken, error) {
 	iDToken := new(IDToken)
-	iDToken.oidcconfig = oidcconfig
+	iDToken.oIDCConfig = oIDCConfig
 
 	iDToken.iDTokenParts = strings.SplitN(rawIDToken, ".", 3)
 
@@ -114,11 +114,11 @@ func (iDToken *IDToken) VerifyIDTokenHeader() error {
 	}
 	if !mystring.Contains(
 		iDToken.iDTokenHeader.Algorithm,
-		iDToken.oidcconfig.IDTokenSigningAlgValuesSupported(),
+		iDToken.oIDCConfig.IDTokenSigningAlgValuesSupported,
 	) {
 		return errors.New("unsupported signature algorithm. actual algorithm in id token's header is " +
 			iDToken.iDTokenHeader.Algorithm + ". supported signing algorithm is " +
-			fmt.Sprintf("%v", iDToken.oidcconfig.IDTokenSigningAlgValuesSupported()))
+			fmt.Sprintf("%v", iDToken.oIDCConfig.IDTokenSigningAlgValuesSupported))
 	}
 
 	return nil
@@ -309,7 +309,7 @@ type Option func(*IDToken) error
 // Issuer is functional option to add expected issuer.
 func Issuer() Option {
 	return func(iDToken *IDToken) error {
-		iDToken.expectedIssuer = iDToken.oidcconfig.Issuer()
+		iDToken.expectedIssuer = iDToken.oIDCConfig.Issuer
 		return nil
 	}
 }

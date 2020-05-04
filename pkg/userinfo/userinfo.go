@@ -52,16 +52,16 @@ type Response struct {
 
 // UserInfo is struct to request UserInfo Endpoint.
 type UserInfo struct {
-	oidcconfig *oidcconfig.OIDCConfig
+	oIDCConfig oidcconfig.Response
 	response   Response
 	// required
 	accessToken string
 }
 
 // NewUserInfo is UserInfo constructor function.
-func NewUserInfo(oidcconfig *oidcconfig.OIDCConfig, accessToken string, options ...Option) *UserInfo {
+func NewUserInfo(oIDCConfig oidcconfig.Response, accessToken string, options ...Option) *UserInfo {
 	userInfo := new(UserInfo)
-	userInfo.oidcconfig = oidcconfig
+	userInfo.oIDCConfig = oIDCConfig
 	userInfo.accessToken = accessToken
 
 	for _, option := range options {
@@ -78,7 +78,7 @@ func (userInfo *UserInfo) Request() error {
 
 	userInfoRequest, err := http.NewRequest(
 		"POST",
-		userInfo.oidcconfig.UserInfoEndpoint(),
+		userInfo.oIDCConfig.UserInfoEndpoint,
 		nil,
 	)
 	if err != nil {
