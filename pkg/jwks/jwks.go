@@ -41,26 +41,34 @@ func NewJWKs(oIDCConfig oidcconfig.Response) *JWKs {
 }
 
 // Request is method to request JWKs URI.
-func (jWKs *JWKs) Request() error {
+func (jWKs *JWKs) Request() (nerr error) {
 	response, err := http.Get(jWKs.oIDCConfig.JWKsURI)
 	if err != nil {
-		return err
+		nerr = err
+		return
 	}
 	defer func() {
-		io.Copy(ioutil.Discard, response.Body)
-		response.Body.Close()
+		if _, err := io.Copy(ioutil.Discard, response.Body); err != nil {
+			nerr = err
+			return
+		}
+		if err := response.Body.Close(); err != nil {
+			nerr = err
+			return
+		}
 	}()
 
 	var jWKsResponse Response
 	err = json.NewDecoder(response.Body).Decode(&jWKsResponse)
 	if err != nil {
-		return err
+		nerr = err
+		return
 	}
 	jWKsResponse.Status = response.Status
 	jWKsResponse.StatusCode = response.StatusCode
 	jWKs.response = jWKsResponse
 
-	return nil
+	return
 }
 
 // Response is getter method of Response struct

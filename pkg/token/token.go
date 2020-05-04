@@ -99,7 +99,7 @@ func RefreshToken(refreshToken string) Option {
 }
 
 // Request is method to request Token Endpoint.
-func (token *Token) Request() error {
+func (token *Token) Request() (nerr error) {
 	values := url.Values{}
 	values.Set("grant_type", token.grantType)
 
@@ -135,7 +135,8 @@ func (token *Token) Request() error {
 		strings.NewReader(values.Encode()),
 	)
 	if err != nil {
-		return err
+		nerr = err
+		return
 	}
 	tokenRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
@@ -145,24 +146,32 @@ func (token *Token) Request() error {
 
 	response, err := http.DefaultClient.Do(tokenRequest)
 	defer func() {
-		io.Copy(ioutil.Discard, response.Body)
-		response.Body.Close()
+		if _, err := io.Copy(ioutil.Discard, response.Body); err != nil {
+			nerr = err
+			return
+		}
+		if err := response.Body.Close(); err != nil {
+			nerr = err
+			return
+		}
 	}()
 
 	if err != nil {
-		return err
+		nerr = err
+		return
 	}
 
 	var tokenResponse Response
 	err = json.NewDecoder(response.Body).Decode(&tokenResponse)
 	if err != nil {
-		return err
+		nerr = err
+		return
 	}
 	tokenResponse.Status = response.Status
 	tokenResponse.StatusCode = response.StatusCode
 	token.response = tokenResponse
 
-	return nil
+	return
 }
 
 // Response is getter method of Response struct.
