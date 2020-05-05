@@ -124,7 +124,7 @@ func (token *Token) Request() (nerr error) {
 		} else if method == "client_secret_post" {
 			tokenEndpointAuthMethod = "client_secret_post"
 			values.Add("client_id", token.clientID)
-			values.Add("refresh_secret", token.clientSecret)
+			values.Add("client_secret", token.clientSecret)
 			break
 		}
 	}
