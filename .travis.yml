@@ -9,11 +9,14 @@ go:
 env:
   - GO111MODULE=on
 
+before_install:
+  - go get golang.org/x/tools/cmd/cover
+  - go get github.com/mattn/goveralls
+
 install:
   - go get -v golang.org/x/lint/golint
-  - go get github.com/mattn/goveralls
 
 script:
   - golint -set_exit_status ./...
-  - go test -cover -v ./...
-  - $GOPATH/bin/goveralls -service=travis-ci
+  - go test -v -covermode=count -coverprofile=coverage.out ./...
+  - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci
