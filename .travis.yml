@@ -9,9 +9,11 @@ go:
 env:
   - GO111MODULE=on
 
+before_install:
+  - go get github.com/mattn/goveralls
+
 install:
   - go get -v golang.org/x/lint/golint
-  - go get github.com/mattn/goveralls
 
 script:
   - golint -set_exit_status ./...
