@@ -7,6 +7,7 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
+// Constants for RP and OP.
 const (
 	RedirectURI   = "https://rp.example.com/callback"
 	OIDCConfigURI = "https://op.example.com/.well-known/openid-configuration"
