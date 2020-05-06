@@ -11,7 +11,9 @@ env:
 
 install:
   - go get -v golang.org/x/lint/golint
+  - go get github.com/mattn/goveralls
 
 script:
   - golint -set_exit_status ./...
   - go test -cover -v ./...
+  - $GOPATH/bin/goveralls -service=travis-ci
