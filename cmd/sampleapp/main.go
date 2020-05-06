@@ -200,10 +200,10 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	log.Println("refresh token: " + tokenResponse.RefreshToken)
 	log.Println("expires in: ", tokenResponse.ExpiresIn)
 	log.Println("id token: " + tokenResponse.IDToken)
-	log.Println("error: ", tokenResponse.Error)
-	log.Println("error description: ", tokenResponse.ErrorDescription)
 
 	if tokenResponse.StatusCode != http.StatusOK {
+		log.Println("error: ", tokenResponse.Error)
+		log.Println("error_description: ", tokenResponse.ErrorDescription)
 		if tokenResponse.Error == "invalid_grant" {
 			w.Header().Set("Cache-Control", "no-store")
 			w.Header().Set("Pragma", "no-cache")
@@ -341,7 +341,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	log.Println("success to verify sub claim")
 
 	// request to token endpoint as refresh
-	// note: you don't refresh when access token is valid
+	// note: you don't need to refresh when access token is valid
 	refreshPointer := token.NewToken(
 		oIDCConfigResponse,
 		configs.GetClientIDValue(),
@@ -358,6 +358,8 @@ func callback(w http.ResponseWriter, r *http.Request) {
 
 	refreshResponse := refreshPointer.Response()
 	if refreshResponse.StatusCode != http.StatusOK {
+		log.Println("error: ", refreshResponse.Error)
+		log.Println("error_description: ", refreshResponse.ErrorDescription)
 		log.Println("token response was error as refresh")
 		renderUnexpectedError(w)
 		return
