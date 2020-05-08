@@ -9,4 +9,5 @@ OpenID Connect Relying Party Library for Go
 This library aims to be a lightweight OpenID Connect Relying Party library for Go.  
 The library is implemented using only the standard packages provided by Go, making it independent of heavy libraries or frameworks.  
 Since it is a simple implementation as much as possible, you need to implement processing such as cache and session management, but it provides the minimum necessary functions (e.g., issuing Access Token, ID Token signature verification etc.) for RP of OpenID Connect.  
+In addition, it strives to comply with OAuth 2.0 and its extended profiles as well as OpenID Connect.  
 First, let's start the application. Then, check the flow of processing with the output log.  
