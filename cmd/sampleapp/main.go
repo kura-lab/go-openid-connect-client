@@ -14,7 +14,6 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/scope"
 	"github.com/kura-lab/go-openid-connect-client/pkg/idtoken"
 	"github.com/kura-lab/go-openid-connect-client/pkg/jwks"
-	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 	"github.com/kura-lab/go-openid-connect-client/pkg/token"
 	"github.com/kura-lab/go-openid-connect-client/pkg/userinfo"
 )
@@ -77,25 +76,14 @@ func authentication(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, nonceCookie)
 	log.Println("stored state and nonce in session")
 
-	// request to .well-known endpoint to get openid-configuration
-	oIDCConfigPointer := oidcconfig.New(
-		configs.OIDCConfigURI,
-	)
-	if err := oIDCConfigPointer.Request(); err != nil {
-		log.Println("failed to request openid configuration")
+	// get openid configuration
+	oIDCConfigResponse, err := getOIDCConfigResponse()
+	if err != nil {
+		log.Println("failed to get openid configuration response")
 		renderUnexpectedError(w)
 		return
 	}
-
-	oIDCConfigResponse := oIDCConfigPointer.Response()
-	log.Println("status: " + oIDCConfigResponse.Status)
-
-	if oIDCConfigResponse.StatusCode != http.StatusOK {
-		log.Println("openid configuration response was error")
-		renderUnexpectedError(w)
-		return
-	}
-	log.Println("requersted to .well-known before authrorization request")
+	log.Println("success to get openid configuration")
 
 	// generate URL to request to authorization endpoint
 	authorizationPotinter := authorization.NewAuthorization(
@@ -156,26 +144,14 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("success to verify state parameter")
 
-	// request to .well-known to get openid configuration
-	oIDCConfigPointer := oidcconfig.New(
-		configs.OIDCConfigURI,
-	)
-	if err := oIDCConfigPointer.Request(); err != nil {
-		log.Println("failed to request openid configuration")
+	// get openid configuration
+	oIDCConfigResponse, err := getOIDCConfigResponse()
+	if err != nil {
+		log.Println("failed to get openid configuration response")
 		renderUnexpectedError(w)
 		return
 	}
-	log.Println("requersted openid configuration before token request")
-
-	oIDCConfigResponse := oIDCConfigPointer.Response()
-	log.Println("status: " + oIDCConfigResponse.Status)
-
-	if oIDCConfigResponse.StatusCode != http.StatusOK {
-		log.Println("openid configuration response was error")
-		renderUnexpectedError(w)
-		return
-	}
-	log.Println("requersted to .well-known before token request")
+	log.Println("success to get openid configuration")
 
 	// request to token endpoint
 	tokenPointer := token.NewToken(
