@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kura-lab/go-openid-connect-client/configs"
+	"github.com/kura-lab/go-openid-connect-client/internal/apps/sampleapp/pkg/credential"
 	"github.com/kura-lab/go-openid-connect-client/internal/apps/sampleapp/pkg/rand"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/display"
@@ -88,7 +89,7 @@ func authentication(w http.ResponseWriter, r *http.Request) {
 	// generate URL to request to authorization endpoint
 	authorizationPotinter := authorization.NewAuthorization(
 		oIDCConfigResponse,
-		configs.GetClientIDValue(),
+		credential.GetClientIDValue(),
 		configs.RedirectURI,
 		authorization.ResponseType(responsetype.Code),
 		authorization.Scope(scope.OpenID, scope.Email),
@@ -156,8 +157,8 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	// request to token endpoint
 	tokenPointer := token.NewToken(
 		oIDCConfigResponse,
-		configs.GetClientIDValue(),
-		configs.GetClientSecretValue(),
+		credential.GetClientIDValue(),
+		credential.GetClientSecretValue(),
 		token.GrantType("authorization_code"),
 		token.AuthorizationCode(query["code"][0]),
 		token.RedirectURI(configs.RedirectURI),
@@ -258,7 +259,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 
 	err = iDTokenPointer.VerifyPayloadClaims(
 		idtoken.Issuer(),
-		idtoken.Audience(configs.GetClientIDValue()),
+		idtoken.Audience(credential.GetClientIDValue()),
 		idtoken.Nonce(storedNonce.Value),
 		idtoken.DurationIssuedAt(600),
 	)
@@ -320,8 +321,8 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	// note: you don't need to refresh when access token is valid
 	refreshPointer := token.NewToken(
 		oIDCConfigResponse,
-		configs.GetClientIDValue(),
-		configs.GetClientSecretValue(),
+		credential.GetClientIDValue(),
+		credential.GetClientSecretValue(),
 		token.GrantType("refresh_token"),
 		token.RefreshToken(tokenResponse.RefreshToken),
 	)
