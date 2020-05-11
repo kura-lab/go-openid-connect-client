@@ -1,9 +1,10 @@
-package configs
+package credential
 
 import (
 	"log"
 	"time"
 
+	"github.com/kura-lab/go-openid-connect-client/configs"
 	"github.com/patrickmn/go-cache"
 )
 
@@ -22,7 +23,7 @@ func GetClientIDValue() string {
 	}
 
 	log.Println("load client id from secure data store and cache it")
-	clientID := getClientIDFromSecureStore()
+	clientID := configs.GetClientIDFromSecureStore()
 	cached.Set("ClientID", clientID, cache.DefaultExpiration)
 
 	return clientID
@@ -36,7 +37,7 @@ func GetClientSecretValue() string {
 	}
 
 	log.Println("load client secret from secure data store and cache it")
-	clientSecret := getClientSecretFromSecureStore()
+	clientSecret := configs.GetClientSecretFromSecureStore()
 	cached.Set("ClientSecret", clientSecret, cache.DefaultExpiration)
 
 	return clientSecret
