@@ -14,7 +14,6 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/responsetype"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/scope"
 	"github.com/kura-lab/go-openid-connect-client/pkg/idtoken"
-	"github.com/kura-lab/go-openid-connect-client/pkg/jwks"
 	"github.com/kura-lab/go-openid-connect-client/pkg/token"
 	"github.com/kura-lab/go-openid-connect-client/pkg/userinfo"
 )
@@ -216,24 +215,14 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	log.Println("alg: ", iDTokenPointerHeader.Algorithm)
 	log.Println("verified id token's header")
 
-	// request to jwks uri
-	jWKsPointer := jwks.NewJWKs(oIDCConfigResponse)
-
-	if err := jWKsPointer.Request(); err != nil {
-		log.Println("failed to request jwks uri")
+	// get jwks response
+	jWKsResponse, err := getJWKsResponse(oIDCConfigResponse)
+	if err != nil {
+		log.Println("failed to get jwks response")
 		renderUnexpectedError(w)
 		return
 	}
-
-	jWKsResponse := jWKsPointer.Response()
-	log.Println("status: " + jWKsResponse.Status)
-
-	if jWKsResponse.StatusCode != http.StatusOK {
-		log.Println("jwks response was error")
-		renderUnexpectedError(w)
-		return
-	}
-	log.Println("requested to jwks uri")
+	log.Println("success to get jwks response")
 
 	// verify id token's signature
 	if err := iDTokenPointer.VerifySignature(jWKsResponse); err != nil {

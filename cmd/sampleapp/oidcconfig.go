@@ -4,19 +4,11 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/kura-lab/go-openid-connect-client/configs"
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 	"github.com/patrickmn/go-cache"
 )
-
-var cached *cache.Cache
-
-func init() {
-	// create cache of client id and client secret
-	cached = cache.New(24*time.Hour, 25*time.Hour)
-}
 
 func getOIDCConfigResponse() (oidcconfig.Response, error) {
 	if data, found := cached.Get("OIDCConfigResponse"); found {
