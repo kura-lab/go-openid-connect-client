@@ -19,6 +19,10 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/userinfo"
 )
 
+func init() {
+	log.SetFlags(log.Lshortfile)
+}
+
 func main() {
 	// register handlers with multiplexer
 	mux := http.NewServeMux()
