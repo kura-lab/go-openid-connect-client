@@ -2,6 +2,7 @@ package token
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
+	"github.com/kura-lab/go-openid-connect-client/pkg/state"
 )
 
 // Response is struct for Token Response.
@@ -28,6 +30,7 @@ type Response struct {
 // Token is struct to request Token Endpoint.
 type Token struct {
 	oIDCConfig oidcconfig.Response
+	statePass  state.Pass
 	response   Response
 	// required
 	clientID     string
@@ -57,6 +60,23 @@ func NewToken(oIDCConfig oidcconfig.Response, clientID string, clientSecret stri
 
 // Option is functional option for Token struct initialization.
 type Option func(*Token) error
+
+// IgnoreStateVerification is functional option to ignore state verification
+// Notice: using this function is not recommended. you should verify state to prevent Cross-Site Request Forgery(CSRF, XSRF).
+func IgnoreStateVerification() Option {
+	return func(token *Token) error {
+		token.statePass = state.Pass{VerificationResult: true}
+		return nil
+	}
+}
+
+// StatePass is functional option to add state.pass included state verification result.
+func StatePass(pass state.Pass) Option {
+	return func(token *Token) error {
+		token.statePass = pass
+		return nil
+	}
+}
 
 // GrantType is functional option to add "grant_type" parameter.
 func GrantType(grantType string) Option {
@@ -100,6 +120,12 @@ func RefreshToken(refreshToken string) Option {
 
 // Request is method to request Token Endpoint.
 func (token *Token) Request() (nerr error) {
+
+	if !token.statePass.VerificationResult {
+		nerr = errors.New("state parameter has not been verified or the verification result was false")
+		return
+	}
+
 	values := url.Values{}
 	values.Set("grant_type", token.grantType)
 
