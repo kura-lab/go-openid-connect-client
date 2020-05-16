@@ -62,9 +62,8 @@ func (state *State) Verify() (Pass, error) {
 	if state.callback != "" {
 		if state.requested == state.callback {
 			return Pass{VerificationResult: true}, nil
-		} else {
-			return Pass{}, errors.New("callback state is not equal to value of requested state")
 		}
+		return Pass{}, errors.New("callback state is not equal to value of requested state")
 	}
 
 	if state.callbackQueryString != "" || state.callbackURI != nil {
@@ -82,12 +81,10 @@ func (state *State) Verify() (Pass, error) {
 		if ok {
 			if state.requested == callback[0] {
 				return Pass{VerificationResult: true}, nil
-			} else {
-				return Pass{}, errors.New("state in callback uri is not equal to value of requested state")
 			}
-		} else {
-			return Pass{}, errors.New("not include state in query of callback uri")
+			return Pass{}, errors.New("state in callback uri is not equal to value of requested state")
 		}
+		return Pass{}, errors.New("not include state in query of callback uri")
 	}
 
 	return Pass{}, errors.New("insufficient state. set callack state or callback uri with functional option")
