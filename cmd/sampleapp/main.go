@@ -14,6 +14,7 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/responsetype"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/scope"
 	"github.com/kura-lab/go-openid-connect-client/pkg/idtoken"
+	"github.com/kura-lab/go-openid-connect-client/pkg/state"
 	"github.com/kura-lab/go-openid-connect-client/pkg/token"
 	"github.com/kura-lab/go-openid-connect-client/pkg/userinfo"
 )
@@ -117,14 +118,6 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	log.Println("-- callback started --")
 
 	// verify state parameter
-	query := r.URL.Query()
-	stateQuery, ok := query["state"]
-	if !ok {
-		log.Println("not exist state in query")
-		renderUnexpectedError(w)
-		return
-	}
-	state := stateQuery[0]
 	storedState, err := r.Cookie("state")
 	if err != nil {
 		log.Println("failed to extract state in cookie")
@@ -137,10 +130,11 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, stateCookie)
 
-	if state != storedState.Value {
+	statePointer := state.NewState(storedState.Value, state.CallbackURI(r.URL))
+	statePass, err := statePointer.Verify()
+	if err != nil {
 		log.Println("state does not match stored one")
 		renderUnexpectedError(w)
-		return
 	}
 	log.Println("success to verify state parameter")
 
@@ -154,10 +148,12 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	log.Println("success to get openid configuration")
 
 	// request to token endpoint
+	query := r.URL.Query()
 	tokenPointer := token.NewToken(
 		oIDCConfigResponse,
 		credential.GetClientIDValue(),
 		credential.GetClientSecretValue(),
+		token.StatePass(statePass),
 		token.GrantType("authorization_code"),
 		token.AuthorizationCode(query["code"][0]),
 		token.RedirectURI(configs.RedirectURI),
@@ -312,6 +308,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		oIDCConfigResponse,
 		credential.GetClientIDValue(),
 		credential.GetClientSecretValue(),
+		token.StatePass(statePass),
 		token.GrantType("refresh_token"),
 		token.RefreshToken(tokenResponse.RefreshToken),
 	)
