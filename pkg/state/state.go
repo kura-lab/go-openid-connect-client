@@ -40,7 +40,7 @@ func CallbackState(callback string) Option {
 	}
 }
 
-// CallbackURI is functional option to add callback url.URL included "state" parameter.
+// CallbackQueryString is functional option to add callback Query String included "state" parameter.
 func CallbackQueryString(callbackQueryString string) Option {
 	return func(state *State) error {
 		state.callbackQueryString = callbackQueryString
