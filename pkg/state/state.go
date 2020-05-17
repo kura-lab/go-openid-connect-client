@@ -87,5 +87,5 @@ func (state *State) Verify() (Pass, error) {
 		return Pass{}, errors.New("not include state in query of callback uri")
 	}
 
-	return Pass{}, errors.New("insufficient state. set callack state or callback uri with functional option")
+	return Pass{}, errors.New("insufficient state. set callback state or callback uri with functional option")
 }
