@@ -147,6 +147,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("state does not match stored one")
 		renderUnexpectedError(w)
+		return
 	}
 	log.Println("success to verify state parameter")
 
@@ -189,11 +190,6 @@ func callback(w http.ResponseWriter, r *http.Request) {
 
 	tokenResponse := tokenPointer.Response()
 	log.Println("status: " + tokenResponse.Status)
-	log.Println("access token: " + tokenResponse.AccessToken)
-	log.Println("token type: " + tokenResponse.TokenType)
-	log.Println("refresh token: " + tokenResponse.RefreshToken)
-	log.Println("expires in: ", tokenResponse.ExpiresIn)
-	log.Println("id token: " + tokenResponse.IDToken)
 
 	if tokenResponse.StatusCode != http.StatusOK {
 		log.Println("error: ", tokenResponse.Error)
@@ -209,6 +205,11 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		renderUnexpectedError(w)
 		return
 	}
+	log.Println("access token: " + tokenResponse.AccessToken)
+	log.Println("token type: " + tokenResponse.TokenType)
+	log.Println("refresh token: " + tokenResponse.RefreshToken)
+	log.Println("expires in: ", tokenResponse.ExpiresIn)
+	log.Println("id token: " + tokenResponse.IDToken)
 	log.Println("requested to token endpoint")
 
 	// verify id token's header
