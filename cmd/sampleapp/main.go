@@ -13,8 +13,8 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/display"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/responsetype"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/scope"
+	mycallback "github.com/kura-lab/go-openid-connect-client/pkg/callback"
 	"github.com/kura-lab/go-openid-connect-client/pkg/idtoken"
-	"github.com/kura-lab/go-openid-connect-client/pkg/state"
 	"github.com/kura-lab/go-openid-connect-client/pkg/token"
 	"github.com/kura-lab/go-openid-connect-client/pkg/userinfo"
 )
@@ -121,6 +121,15 @@ func authentication(w http.ResponseWriter, r *http.Request) {
 func callback(w http.ResponseWriter, r *http.Request) {
 	log.Println("-- callback started --")
 
+	// parse callback query
+	callbackPointer := mycallback.NewCallback(mycallback.URI(r.URL))
+	if err := callbackPointer.Parse(); err != nil {
+		log.Println("failed to parse callback query")
+		renderUnexpectedError(w)
+		return
+	}
+	log.Println("success to parse callback query")
+
 	// verify state parameter
 	storedState, err := r.Cookie("state")
 	if err != nil {
@@ -134,13 +143,23 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, stateCookie)
 
-	statePointer := state.NewState(storedState.Value, state.CallbackURI(r.URL))
-	statePass, err := statePointer.Verify()
+	statePass, err := callbackPointer.VerifyState(storedState.Value)
 	if err != nil {
 		log.Println("state does not match stored one")
 		renderUnexpectedError(w)
 	}
 	log.Println("success to verify state parameter")
+
+	// check whether error parameter exists in callback query
+	callbackResponse := callbackPointer.Response()
+	if callbackResponse.Error != "" {
+		log.Println("error: " + callbackResponse.Error)
+		log.Println("error_description: " + callbackResponse.ErrorDescription)
+		log.Println("error_uri: " + callbackResponse.ErrorURI)
+		renderUnexpectedError(w)
+		return
+	}
+	log.Println("error didn't exist in callback query")
 
 	// get openid configuration
 	oIDCConfigResponse, err := getOIDCConfigResponse()
@@ -152,14 +171,13 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	log.Println("success to get openid configuration")
 
 	// request to token endpoint
-	query := r.URL.Query()
 	tokenPointer := token.NewToken(
 		oIDCConfigResponse,
 		credential.GetClientIDValue(),
 		credential.GetClientSecretValue(),
 		token.StatePass(statePass),
 		token.GrantType("authorization_code"),
-		token.AuthorizationCode(query["code"][0]),
+		token.AuthorizationCode(callbackResponse.AuthorizationCode),
 		token.RedirectURI(configs.RedirectURI),
 	)
 
