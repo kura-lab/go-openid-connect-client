@@ -142,38 +142,40 @@ func (config *OIDCConfig) Request() (nerr error) {
 	configResponse.StatusCode = response.StatusCode
 	config.response = configResponse
 
-	if configResponse.Issuer != "" {
-		config.issuer = configResponse.Issuer
-	}
-	if configResponse.AuthorizationEndpoint != "" {
-		config.authorizationEndpoint = configResponse.AuthorizationEndpoint
-	}
-	if configResponse.TokenEndpoint != "" {
-		config.tokenEndpoint = configResponse.TokenEndpoint
-	}
-	if configResponse.UserInfoEndpoint != "" {
-		config.userInfoEndpoint = configResponse.UserInfoEndpoint
-	}
-	if configResponse.JWKsURI != "" {
-		config.jWKsURI = configResponse.JWKsURI
-	}
-	if len(configResponse.TokenEndpointAuthMethodsSupported) > 0 {
-		config.tokenEndpointAuthMethodsSupported = configResponse.TokenEndpointAuthMethodsSupported
-	}
-	if len(configResponse.ResponseTypesSupported) > 0 {
-		config.responseTypesSupported = configResponse.ResponseTypesSupported
-	}
-	if len(configResponse.ScopesSupported) > 0 {
-		config.scopesSupported = configResponse.ScopesSupported
-	}
-	if len(configResponse.IDTokenSigningAlgValuesSupported) > 0 {
-		config.iDTokenSigningAlgValuesSupported = configResponse.IDTokenSigningAlgValuesSupported
-	}
-
 	return
 }
 
 // Response is getter method of Response struct.
+// if specify parameters with NewOIDCConfig, these parameter will be set.
 func (config *OIDCConfig) Response() Response {
+
+	if config.issuer != "" {
+		config.response.Issuer = config.issuer
+	}
+	if config.authorizationEndpoint != "" {
+		config.response.AuthorizationEndpoint = config.authorizationEndpoint
+	}
+	if config.tokenEndpoint != "" {
+		config.response.TokenEndpoint = config.tokenEndpoint
+	}
+	if config.userInfoEndpoint != "" {
+		config.response.UserInfoEndpoint = config.userInfoEndpoint
+	}
+	if config.jWKsURI != "" {
+		config.response.JWKsURI = config.jWKsURI
+	}
+	if len(config.tokenEndpointAuthMethodsSupported) > 0 {
+		config.response.TokenEndpointAuthMethodsSupported = config.tokenEndpointAuthMethodsSupported
+	}
+	if len(config.responseTypesSupported) > 0 {
+		config.response.ResponseTypesSupported = config.responseTypesSupported
+	}
+	if len(config.scopesSupported) > 0 {
+		config.response.ScopesSupported = config.scopesSupported
+	}
+	if len(config.iDTokenSigningAlgValuesSupported) > 0 {
+		config.response.IDTokenSigningAlgValuesSupported = config.iDTokenSigningAlgValuesSupported
+	}
+
 	return config.response
 }
