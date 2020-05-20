@@ -104,6 +104,14 @@ func TokenEndpointAuthMethodsSupported(tokenEndpointAuthMethodsSupported []strin
 	}
 }
 
+// IDTokenSigningAlgValuesSupported is functional option to add ID Token Signing Algorithm Values Supported.
+func IDTokenSigningAlgValuesSupported(iDTokenSigningAlgValuesSupported []string) Option {
+	return func(config *OIDCConfig) error {
+		config.iDTokenSigningAlgValuesSupported = iDTokenSigningAlgValuesSupported
+		return nil
+	}
+}
+
 // Request is method to request OpenID Configuration Endpoint.
 func (config *OIDCConfig) Request() (nerr error) {
 	configRequest, err := http.NewRequest(

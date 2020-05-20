@@ -87,12 +87,14 @@ func NewIDToken(oIDCConfig oidcconfig.Response, rawIDToken string) (*IDToken, er
 		return nil, err
 	}
 
-	if err := json.Unmarshal(iDTokenPayload.RawAudience, &iDTokenPayload.Audience); err != nil {
-		var audString string
-		if err := json.Unmarshal(iDTokenPayload.RawAudience, &audString); err != nil {
-			return nil, err
+	if iDTokenPayload.RawAudience != nil {
+		if err := json.Unmarshal(iDTokenPayload.RawAudience, &iDTokenPayload.Audience); err != nil {
+			var audString string
+			if err := json.Unmarshal(iDTokenPayload.RawAudience, &audString); err != nil {
+				return nil, err
+			}
+			iDTokenPayload.Audience = append(iDTokenPayload.Audience, audString)
 		}
-		iDTokenPayload.Audience = append(iDTokenPayload.Audience, audString)
 	}
 
 	iDToken.iDTokenPayload = iDTokenPayload
