@@ -41,3 +41,23 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 		t.Errorf("invalid kid. expected: KEY_ID, actual: %v", iDTokenPointerHeader.KeyID)
 	}
 }
+
+func TestNewOIDCConfigFailure(t *testing.T) {
+
+	config := oidcconfig.NewOIDCConfig(
+		oidcconfig.Issuer("https://op.example.com"),
+		oidcconfig.IDTokenSigningAlgValuesSupported([]string{"RS256"}),
+	)
+	oIDCConfigResponse := config.Response()
+
+	rawIDToken := "INVALID_HEADER.eyJzdWIiOiIxMjM0NTY3ODkwIiwiYXVkIjoiWU9VUl9DTElFTlRfSUQifQ.PfYYCnyibH0CQ6_tYGfcRtpeIYEp1wwn22zQQFpR2ec4buJEfodrOphVTsh3JdgfbXYGokzQBwVkKDDx1u6zrsYMfJWlni1mBdPr19NkmWvQ0dxf6ExuG5aJtWvOR_MYo0Mhzn393yxmmAZ8fwRxNinqPuN19yqlPxBXY2fD23042uWBkYDdUL3eY094OvlOU_CF06BXgNGvm0CQ9Ssm_I2LbgeOd-bmX16gznHldIsY7eE3VfUyPQCu1FbNfCkm0QxXYP4LL60GgaGx65WhD45CHN8hXOVfgMWpd73EuzdZa64iEUwJpxwf9_fdYWoRznOh5mDjI3FSc1_0AsOFfQ"
+
+	_, err := NewIDToken(
+		oIDCConfigResponse,
+		rawIDToken,
+	)
+
+	if err == nil {
+		t.Errorf("success to decode id token header: %#v", err)
+	}
+}
