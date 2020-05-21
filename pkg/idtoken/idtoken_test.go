@@ -1,12 +1,59 @@
 package idtoken
 
 import (
+	"crypto"
+	"crypto/rand"
+	"crypto/rsa"
+	"encoding/base64"
+	"encoding/json"
+	"math/big"
+	"strings"
 	"testing"
 
+	"github.com/kura-lab/go-openid-connect-client/pkg/jwks"
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
 func TestNewOIDCConfigSuccess(t *testing.T) {
+
+	header := map[string]string{
+		"typ": "JWT",
+		"alg": "RS256",
+		"kid": "KEY_ID",
+	}
+	jsonHeader, err := json.Marshal(header)
+	encodedHeader := base64.RawURLEncoding.EncodeToString(jsonHeader)
+
+	payload := map[string]string{
+		"sub": "123456789",
+	}
+	jsonPayload, err := json.Marshal(payload)
+	encodedPayload := base64.RawURLEncoding.EncodeToString(jsonPayload)
+
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+
+	publicKey := privateKey.PublicKey
+	modulus := base64.RawURLEncoding.EncodeToString(publicKey.N.Bytes())
+	exponent := base64.RawURLEncoding.EncodeToString(big.NewInt(int64(publicKey.E)).Bytes())
+
+	data := encodedHeader + "." + encodedPayload
+
+	hash := crypto.Hash.New(crypto.SHA256)
+	hash.Write(([]byte)(data))
+	hashed := hash.Sum(nil)
+
+	signature, _ := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, hashed)
+
+	encodedSignature := base64.RawURLEncoding.EncodeToString(signature)
+
+	rawIDToken := strings.Join(
+		[]string{
+			encodedHeader,
+			encodedPayload,
+			encodedSignature,
+		},
+		".",
+	)
 
 	config := oidcconfig.NewOIDCConfig(
 		oidcconfig.Issuer("https://op.example.com"),
@@ -14,31 +61,46 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 	)
 	oIDCConfigResponse := config.Response()
 
-	rawIDToken := "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IktFWV9JRCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiYXVkIjoiWU9VUl9DTElFTlRfSUQifQ.PfYYCnyibH0CQ6_tYGfcRtpeIYEp1wwn22zQQFpR2ec4buJEfodrOphVTsh3JdgfbXYGokzQBwVkKDDx1u6zrsYMfJWlni1mBdPr19NkmWvQ0dxf6ExuG5aJtWvOR_MYo0Mhzn393yxmmAZ8fwRxNinqPuN19yqlPxBXY2fD23042uWBkYDdUL3eY094OvlOU_CF06BXgNGvm0CQ9Ssm_I2LbgeOd-bmX16gznHldIsY7eE3VfUyPQCu1FbNfCkm0QxXYP4LL60GgaGx65WhD45CHN8hXOVfgMWpd73EuzdZa64iEUwJpxwf9_fdYWoRznOh5mDjI3FSc1_0AsOFfQ"
-
 	iDTokenPointer, err := NewIDToken(
 		oIDCConfigResponse,
 		rawIDToken,
 	)
 
 	if err != nil {
-		t.Errorf("failed to decode id token: %#v", err)
+		t.Fatalf("failed to decode id token: %#v", err)
 	}
 
 	if err := iDTokenPointer.VerifyIDTokenHeader(); err != nil {
-		t.Errorf("invalid claim in id token header: %#v", err)
+		t.Fatalf("invalid claim in id token header: %#v", err)
 	}
 
 	iDTokenPointerHeader := iDTokenPointer.GetIDTokenHeader()
 
 	if iDTokenPointerHeader.Type != "JWT" {
-		t.Errorf("invalid typ. expected: JWT, actual: %v", iDTokenPointerHeader.Type)
+		t.Fatalf("invalid typ. expected: JWT, actual: %v", iDTokenPointerHeader.Type)
 	}
 	if iDTokenPointerHeader.Algorithm != "RS256" {
-		t.Errorf("invalid alg. expected: RS256, actual: %v", iDTokenPointerHeader.Algorithm)
+		t.Fatalf("invalid alg. expected: RS256, actual: %v", iDTokenPointerHeader.Algorithm)
 	}
 	if iDTokenPointerHeader.KeyID != "KEY_ID" {
-		t.Errorf("invalid kid. expected: KEY_ID, actual: %v", iDTokenPointerHeader.KeyID)
+		t.Fatalf("invalid kid. expected: KEY_ID, actual: %v", iDTokenPointerHeader.KeyID)
+	}
+
+	jWKsResponse := jwks.Response{
+		KeySets: []jwks.KeySet{
+			{
+				KeyID:     "KEY_ID",
+				KeyType:   "RSA",
+				Algorithm: "RS256",
+				Use:       "sig",
+				Modulus:   modulus,
+				Exponent:  exponent,
+			},
+		},
+	}
+
+	if err := iDTokenPointer.VerifySignature(jWKsResponse); err != nil {
+		t.Fatalf("invalid signature: expected: true")
 	}
 }
 
@@ -58,6 +120,6 @@ func TestNewOIDCConfigFailure(t *testing.T) {
 	)
 
 	if err == nil {
-		t.Errorf("success to decode id token header: %#v", err)
+		t.Fatalf("success to decode id token header: %#v", err)
 	}
 }
