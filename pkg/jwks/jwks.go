@@ -9,21 +9,24 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
+// KeySet is struct of KeySet
+type KeySet struct {
+	KeyID       string `json:"kid"`
+	KeyType     string `json:"kty"`
+	Algorithm   string `json:"alg"`
+	Use         string `json:"use"`
+	Modulus     string `json:"n"`
+	Exponent    string `json:"e"`
+	CURVE       string `json:"crv"`
+	XCoordinate string `json:"x"`
+	YCoordinate string `json:"y"`
+}
+
 // Response is struct for JWKs URI Response.
 type Response struct {
 	Status     string
 	StatusCode int
-	KeySets    []struct {
-		KeyID       string `json:"kid"`
-		KeyType     string `json:"kty"`
-		Algorithm   string `json:"alg"`
-		Use         string `json:"use"`
-		Modulus     string `json:"n"`
-		Exponent    string `json:"e"`
-		CURVE       string `json:"crv"`
-		XCoordinate string `json:"x"`
-		YCoordinate string `json:"y"`
-	} `json:"keys"`
+	KeySets    []KeySet `json:"keys"`
 }
 
 // JWKs is struct to request JWKs URI.
