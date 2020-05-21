@@ -20,6 +20,9 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 		{"RS256", crypto.SHA256},
 		{"RS384", crypto.SHA384},
 		{"RS512", crypto.SHA512},
+		{"PS256", crypto.SHA256},
+		{"PS384", crypto.SHA384},
+		{"PS512", crypto.SHA512},
 	}
 
 	for _, algorithm := range algorithms {
@@ -50,7 +53,13 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 		hash.Write(([]byte)(data))
 		hashed := hash.Sum(nil)
 
-		signature, _ := rsa.SignPKCS1v15(rand.Reader, privateKey, algorithm[1].(crypto.Hash), hashed)
+		var signature []byte
+		switch algorithm[0].(string) {
+		case "RS256", "RS384", "RS512":
+			signature, _ = rsa.SignPKCS1v15(rand.Reader, privateKey, algorithm[1].(crypto.Hash), hashed)
+		case "PS256", "PS384", "PS512":
+			signature, _ = rsa.SignPSS(rand.Reader, privateKey, algorithm[1].(crypto.Hash), hashed, nil)
+		}
 
 		encodedSignature := base64.RawURLEncoding.EncodeToString(signature)
 
@@ -108,7 +117,7 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 		}
 
 		if err := iDTokenPointer.VerifySignature(jWKsResponse); err != nil {
-			t.Fatalf("invalid signature: expected: true")
+			t.Fatalf("invalid signature. expected: true, alg: %v", algorithm[0].(string))
 		}
 	}
 }
