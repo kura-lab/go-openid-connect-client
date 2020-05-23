@@ -178,7 +178,7 @@ func (iDToken *IDToken) generateRSAPublicKey(jWKsResponse jwks.Response) (rsa.Pu
 	if err != nil {
 		return rsa.PublicKey{}, err
 	}
-	decodedExponent, err := base64.StdEncoding.DecodeString(exponent)
+	decodedExponent, err := base64.RawURLEncoding.DecodeString(exponent)
 	if err != nil {
 		return rsa.PublicKey{}, err
 	}
