@@ -226,7 +226,7 @@ func (iDToken *IDToken) generateECDSAPublicKey(jWKsResponse jwks.Response) (ecds
 	if err != nil {
 		return ecdsa.PublicKey{}, err
 	}
-	decodedY, err := base64.StdEncoding.DecodeString(encodedY)
+	decodedY, err := base64.RawURLEncoding.DecodeString(encodedY)
 	if err != nil {
 		return ecdsa.PublicKey{}, err
 	}
