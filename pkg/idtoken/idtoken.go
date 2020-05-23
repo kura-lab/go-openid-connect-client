@@ -372,7 +372,7 @@ func (iDToken *IDToken) VerifyPayloadClaims(options ...Option) error {
 	if iDToken.expectedNonce != "" {
 		if iDToken.expectedNonce != iDToken.iDTokenPayload.Nonce {
 			return errors.New("invalid nonce. actual nonce in id token's payload is " +
-				iDToken.iDTokenPayload.Nonce + ". attakers might replay attack(playback attack)")
+				iDToken.iDTokenPayload.Nonce + ". attackers might replay attack(playback attack)")
 		}
 	}
 
@@ -389,7 +389,7 @@ func (iDToken *IDToken) VerifyPayloadClaims(options ...Option) error {
 		aTHash := myhash.GenerateHalfOfSHA256(iDToken.expectedAccessTokenAccessTokenHash)
 		if aTHash != iDToken.iDTokenPayload.AccessTokenHash {
 			return errors.New("invalid access token hash. actual hash in id token's payload is " +
-				iDToken.iDTokenPayload.AccessTokenHash + ". expected hash is " + aTHash + ". the access token issued with id token might be altered by attakers")
+				iDToken.iDTokenPayload.AccessTokenHash + ". expected hash is " + aTHash + ". the access token issued with id token might be altered by attackers")
 		}
 	}
 
