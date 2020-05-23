@@ -58,7 +58,7 @@ func TestNewOIDCConfigECDSASuccess(t *testing.T) {
 
 		keySize := privateKey.Curve.Params().BitSize / 8
 		if privateKey.Curve.Params().BitSize%8 > 0 {
-			keySize += 1
+			keySize++
 		}
 
 		var signature []byte
