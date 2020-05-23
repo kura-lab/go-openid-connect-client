@@ -14,7 +14,7 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
-func TestNewOIDCConfigSuccess(t *testing.T) {
+func TestNewOIDCConfigRSASuccess(t *testing.T) {
 
 	algorithms := [][]interface{}{
 		{"RS256", crypto.SHA256},
@@ -122,7 +122,7 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 	}
 }
 
-func TestNewOIDCConfigFailure(t *testing.T) {
+func TestNewOIDCConfigRSAFailure(t *testing.T) {
 
 	config := oidcconfig.NewOIDCConfig(
 		oidcconfig.Issuer("https://op.example.com"),
