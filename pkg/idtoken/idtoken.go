@@ -232,8 +232,8 @@ func (iDToken *IDToken) generateECDSAPublicKey(jWKsResponse jwks.Response) (ecds
 	}
 
 	var x, y *big.Int
-	x = x.SetBytes(decodedX)
-	y = y.SetBytes(decodedY)
+	x = new(big.Int).SetBytes(decodedX)
+	y = new(big.Int).SetBytes(decodedY)
 
 	var curve elliptic.Curve
 	if curveAlgorithm == "P-256" {
