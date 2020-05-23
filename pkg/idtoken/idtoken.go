@@ -200,7 +200,7 @@ func (iDToken *IDToken) generateRSAPublicKey(jWKsResponse jwks.Response) (rsa.Pu
 }
 
 func (iDToken *IDToken) generateECDSAPublicKey(jWKsResponse jwks.Response) (ecdsa.PublicKey, error) {
-	var encodedX, encodedY string
+	var encodedX, encodedY, curveAlgorithm string
 	for _, keySet := range jWKsResponse.KeySets {
 		if keySet.KeyID == iDToken.iDTokenHeader.KeyID {
 
@@ -214,6 +214,7 @@ func (iDToken *IDToken) generateECDSAPublicKey(jWKsResponse jwks.Response) (ecds
 
 			encodedX = keySet.XCoordinate
 			encodedY = keySet.YCoordinate
+			curveAlgorithm = keySet.Curve
 			break
 		}
 	}
@@ -235,14 +236,14 @@ func (iDToken *IDToken) generateECDSAPublicKey(jWKsResponse jwks.Response) (ecds
 	y = y.SetBytes(decodedY)
 
 	var curve elliptic.Curve
-	if iDToken.iDTokenHeader.Algorithm == "ES256" {
+	if curveAlgorithm == "P-256" {
 		curve = elliptic.P256()
-	} else if iDToken.iDTokenHeader.Algorithm == "ES384" {
+	} else if curveAlgorithm == "P-384" {
 		curve = elliptic.P384()
-	} else if iDToken.iDTokenHeader.Algorithm == "ES512" {
+	} else if curveAlgorithm == "P-521" {
 		curve = elliptic.P521()
 	} else {
-		return ecdsa.PublicKey{}, errors.New("unsupported signature algorithm. actual algorithm in id token's header is " + iDToken.iDTokenHeader.Algorithm)
+		return ecdsa.PublicKey{}, errors.New("unsupported curve algorithm. actual algorithm in jwk set is " + curveAlgorithm)
 	}
 
 	return ecdsa.PublicKey{Curve: curve, X: x, Y: y}, nil
