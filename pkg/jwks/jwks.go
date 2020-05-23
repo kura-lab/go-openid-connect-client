@@ -17,7 +17,7 @@ type KeySet struct {
 	Use         string `json:"use"`
 	Modulus     string `json:"n"`
 	Exponent    string `json:"e"`
-	CURVE       string `json:"crv"`
+	Curve       string `json:"crv"`
 	XCoordinate string `json:"x"`
 	YCoordinate string `json:"y"`
 }
