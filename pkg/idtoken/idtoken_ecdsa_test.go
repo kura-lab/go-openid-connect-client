@@ -7,7 +7,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"hash"
 	"math/big"
 	"strings"
@@ -57,11 +56,28 @@ func TestNewOIDCConfigECDSASuccess(t *testing.T) {
 
 		r, s, _ = ecdsa.Sign(rand.Reader, privateKey, hashed)
 
-		fmt.Printf("r: %#v\n", len(r.Bytes()))
-		fmt.Printf("s: %#v\n", len(s.Bytes()))
+		keySize := privateKey.Curve.Params().BitSize / 8
+		if privateKey.Curve.Params().BitSize%8 > 0 {
+			keySize += 1
+		}
 
-		signature := r.Bytes()
-		signature = append(signature, s.Bytes()...)
+		var signature []byte
+		rPad := keySize - len(r.Bytes())
+		if rPad > 0 {
+			zeroPad := make([]byte, rPad)
+			signature = append(zeroPad, r.Bytes()...)
+		} else {
+			signature = append(signature, r.Bytes()...)
+		}
+
+		sPad := keySize - len(s.Bytes())
+		if sPad > 0 {
+			zeroPad := make([]byte, sPad)
+			signature = append(signature, zeroPad...)
+			signature = append(signature, s.Bytes()...)
+		} else {
+			signature = append(signature, s.Bytes()...)
+		}
 
 		encodedSignature := base64.RawURLEncoding.EncodeToString(signature)
 
