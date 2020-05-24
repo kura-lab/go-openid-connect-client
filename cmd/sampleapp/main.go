@@ -263,13 +263,13 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idTokenPayload := iDTokenPointer.GetIDTokenPayload()
+	iDTokenPayload := iDTokenPointer.GetIDTokenPayload()
 
 	// verify following claims according to your requirements
-	//log.Println("Expiration: ", idTokenPayload.Expiration)
-	//log.Println("AuthTime: ", idTokenPayload.AuthTime)
-	//log.Println("AuthenticationMethodReference: ", idTokenPayload.AuthenticationMethodReference)
-	//log.Println("AuthenticationContextReference: ", idTokenPayload.AuthenticationContextReference)
+	//log.Println("Expiration: ", iDTokenPayload.Expiration)
+	//log.Println("AuthTime: ", iDTokenPayload.AuthTime)
+	//log.Println("AuthenticationMethodReference: ", iDTokenPayload.AuthenticationMethodReference)
+	//log.Println("AuthenticationContextReference: ", iDTokenPayload.AuthenticationContextReference)
 
 	log.Println("success to verify claims in id token payload")
 
@@ -302,8 +302,8 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	log.Println("requested to userinfo endpoint")
 
 	// verify sub claim
-	if idTokenPayload.Subject != userInfoResponse.Subject {
-		log.Println("id token sub: ", idTokenPayload.Subject)
+	if iDTokenPayload.Subject != userInfoResponse.Subject {
+		log.Println("id token sub: ", iDTokenPayload.Subject)
 		log.Println("userinfo sub: ", userInfoResponse.Subject)
 		log.Println("userinfo's sub not match id token's one")
 		renderUnexpectedError(w)
