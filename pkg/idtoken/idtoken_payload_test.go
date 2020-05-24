@@ -188,5 +188,134 @@ func TestNewOIDCConfigPayloadSuccess(t *testing.T) {
 	}
 }
 
+func TestNewOIDCConfigPayloadAudienceStringSuccess(t *testing.T) {
+
+	algorithms := [][]interface{}{
+		{"RS256", crypto.SHA256},
+	}
+
+	for _, algorithm := range algorithms {
+
+		header := map[string]string{
+			"typ": "JWT",
+			"alg": algorithm[0].(string),
+			"kid": "KEY_ID",
+		}
+		jsonHeader, err := json.Marshal(header)
+		encodedHeader := base64.RawURLEncoding.EncodeToString(jsonHeader)
+
+		currentTime := int(time.Now().Unix())
+
+		payload := map[string]interface{}{
+			"iss":       "https://op.example.com",
+			"sub":       "123456789",
+			"aud":       "CLIENT_ID",
+			"exp":       currentTime + 3600,
+			"iat":       currentTime,
+			"auth_time": currentTime,
+			"nonce":     "NONCE",
+			"amr": []string{
+				"sms",
+			},
+			"at_hash": myhash.GenerateHalfOfSHA256("ACCESS_TOKEN"),
+			"acr":     "nist_auth_level 1",
+		}
+		jsonPayload, err := json.Marshal(payload)
+		encodedPayload := base64.RawURLEncoding.EncodeToString(jsonPayload)
+
+		privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+
+		publicKey := privateKey.PublicKey
+		modulus := base64.RawURLEncoding.EncodeToString(publicKey.N.Bytes())
+		exponent := base64.RawURLEncoding.EncodeToString(big.NewInt(int64(publicKey.E)).Bytes())
+
+		data := encodedHeader + "." + encodedPayload
+
+		hash := crypto.Hash.New(algorithm[1].(crypto.Hash))
+		hash.Write(([]byte)(data))
+		hashed := hash.Sum(nil)
+
+		var signature []byte
+		switch algorithm[0].(string) {
+		case "RS256", "RS384", "RS512":
+			signature, _ = rsa.SignPKCS1v15(rand.Reader, privateKey, algorithm[1].(crypto.Hash), hashed)
+		case "PS256", "PS384", "PS512":
+			signature, _ = rsa.SignPSS(rand.Reader, privateKey, algorithm[1].(crypto.Hash), hashed, nil)
+		}
+
+		encodedSignature := base64.RawURLEncoding.EncodeToString(signature)
+
+		rawIDToken := strings.Join(
+			[]string{
+				encodedHeader,
+				encodedPayload,
+				encodedSignature,
+			},
+			".",
+		)
+
+		config := oidcconfig.NewOIDCConfig(
+			oidcconfig.Issuer("https://op.example.com"),
+			oidcconfig.IDTokenSigningAlgValuesSupported([]string{algorithm[0].(string)}),
+		)
+		oIDCConfigResponse := config.Response()
+
+		iDTokenPointer, err := NewIDToken(
+			oIDCConfigResponse,
+			rawIDToken,
+		)
+
+		if err != nil {
+			t.Fatalf("failed to decode id token: %#v", err)
+		}
+
+		if err := iDTokenPointer.VerifyIDTokenHeader(); err != nil {
+			t.Fatalf("invalid claim in id token header: %#v", err)
+		}
+
+		iDTokenPointerHeader := iDTokenPointer.GetIDTokenHeader()
+
+		if iDTokenPointerHeader.Type != "JWT" {
+			t.Fatalf("invalid typ. expected: JWT, actual: %v", iDTokenPointerHeader.Type)
+		}
+		if iDTokenPointerHeader.Algorithm != algorithm[0].(string) {
+			t.Fatalf("invalid alg. expected: %v, actual: %v", algorithm[0].(string), iDTokenPointerHeader.Algorithm)
+		}
+		if iDTokenPointerHeader.KeyID != "KEY_ID" {
+			t.Fatalf("invalid kid. expected: KEY_ID, actual: %v", iDTokenPointerHeader.KeyID)
+		}
+
+		jWKsResponse := jwks.Response{
+			KeySets: []jwks.KeySet{
+				{
+					KeyID:     "KEY_ID",
+					KeyType:   "RSA",
+					Algorithm: algorithm[0].(string),
+					Use:       "sig",
+					Modulus:   modulus,
+					Exponent:  exponent,
+				},
+			},
+		}
+
+		if err := iDTokenPointer.VerifySignature(jWKsResponse); err != nil {
+			t.Fatalf("invalid signature. expected: true, alg: %v", algorithm[0].(string))
+		}
+
+		err = iDTokenPointer.VerifyPayloadClaims(
+			Audience("CLIENT_ID"),
+		)
+		if err != nil {
+			t.Fatalf("invalid claim in id token payload: expected true, err: %#v", err)
+		}
+
+		iDTokenPayload := iDTokenPointer.GetIDTokenPayload()
+
+		if !mystrings.Contains("CLIENT_ID", iDTokenPayload.Audience) {
+			t.Fatalf("invalid aud: expected: CLIENT_ID, actual: %#v", iDTokenPayload.Audience)
+		}
+	}
+}
+
 func TestNewOIDCConfigPayloadFailure(t *testing.T) {
 }
