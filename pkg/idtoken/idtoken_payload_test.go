@@ -138,6 +138,7 @@ func TestNewOIDCConfigPayloadSuccess(t *testing.T) {
 			Audience(""),
 			Nonce("NONCE"),
 			DurationIssuedAt(600),
+			AccessTokenAccessTokenHash("ACCESS_TOKEN"),
 		)
 		if err != nil {
 			t.Fatalf("invalid claim in id token payload: expected true, err: %#v", err)
