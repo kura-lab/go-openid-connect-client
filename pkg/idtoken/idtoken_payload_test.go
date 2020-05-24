@@ -135,7 +135,7 @@ func TestNewOIDCConfigPayloadSuccess(t *testing.T) {
 
 		err = iDTokenPointer.VerifyPayloadClaims(
 			Issuer(),
-			Audience(""),
+			Audience("CLIENT_ID"),
 			Nonce("NONCE"),
 			DurationIssuedAt(600),
 			AccessTokenAccessTokenHash("ACCESS_TOKEN"),
