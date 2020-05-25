@@ -91,7 +91,7 @@ func NewIDToken(oIDCConfig oidcconfig.Response, rawIDToken string) (*IDToken, er
 		if err := json.Unmarshal(iDTokenPayload.RawAudience, &iDTokenPayload.Audience); err != nil {
 			var audString string
 			if err := json.Unmarshal(iDTokenPayload.RawAudience, &audString); err != nil {
-				return nil, err
+				return nil, errors.New("unexpected type of aud claim. it assumes array type of string or string type")
 			}
 			iDTokenPayload.Audience = append(iDTokenPayload.Audience, audString)
 		}
