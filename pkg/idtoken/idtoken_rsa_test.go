@@ -122,5 +122,179 @@ func TestNewOIDCConfigRSASuccess(t *testing.T) {
 	}
 }
 
-func TestNewOIDCConfigRSAFailure(t *testing.T) {
+func TestNewOIDCConfigGenerateRSAPublicKeyFailures(t *testing.T) {
+
+	header := map[string]string{
+		"typ": "JWT",
+		"alg": "RS256",
+		"kid": "KEY_ID",
+	}
+	jsonHeader, _ := json.Marshal(header)
+	encodedHeader := base64.RawURLEncoding.EncodeToString(jsonHeader)
+
+	payload := map[string]string{
+		"sub": "123456789",
+	}
+	jsonPayload, _ := json.Marshal(payload)
+	encodedPayload := base64.RawURLEncoding.EncodeToString(jsonPayload)
+
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+
+	publicKey := privateKey.PublicKey
+	modulus := base64.RawURLEncoding.EncodeToString(publicKey.N.Bytes())
+	exponent := base64.RawURLEncoding.EncodeToString(big.NewInt(int64(publicKey.E)).Bytes())
+
+	data := encodedHeader + "." + encodedPayload
+
+	hash := crypto.Hash.New(crypto.SHA256)
+	hash.Write(([]byte)(data))
+	hashed := hash.Sum(nil)
+
+	var signature []byte
+	signature, _ = rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, hashed)
+
+	encodedSignature := base64.RawURLEncoding.EncodeToString(signature)
+
+	rawIDToken := strings.Join(
+		[]string{
+			encodedHeader,
+			encodedPayload,
+			encodedSignature,
+		},
+		".",
+	)
+
+	config := oidcconfig.NewOIDCConfig(
+		oidcconfig.Issuer("https://op.example.com"),
+		oidcconfig.IDTokenSigningAlgValuesSupported([]string{"RS256"}),
+	)
+	oIDCConfigResponse := config.Response()
+
+	iDTokenPointer, _ := NewIDToken(
+		oIDCConfigResponse,
+		rawIDToken,
+	)
+
+	if err := iDTokenPointer.VerifyIDTokenHeader(); err != nil {
+		t.Fatalf("invalid claim in id token header: %#v", err)
+	}
+
+	jWKsResponse := jwks.Response{
+		KeySets: []jwks.KeySet{
+			{
+				KeyID:     "KEY_ID",
+				KeyType:   "RSA",
+				Algorithm: "RS256",
+				Use:       "INVALID_USE",
+				Modulus:   modulus,
+				Exponent:  exponent,
+			},
+		},
+	}
+
+	if err := iDTokenPointer.VerifySignature(jWKsResponse); err == nil {
+		t.Fatalf("expect error caused by invalid use of key set")
+	}
+
+	jWKsResponse = jwks.Response{
+		KeySets: []jwks.KeySet{
+			{
+				KeyID:     "KEY_ID",
+				KeyType:   "INVALID_KEY_TYPE",
+				Algorithm: "RS256",
+				Use:       "sig",
+				Modulus:   modulus,
+				Exponent:  exponent,
+			},
+		},
+	}
+
+	if err := iDTokenPointer.VerifySignature(jWKsResponse); err == nil {
+		t.Fatalf("expect error caused by invalid kty of key set")
+	}
+
+	jWKsResponse = jwks.Response{
+		KeySets: []jwks.KeySet{
+			{
+				KeyID:     "KEY_ID",
+				KeyType:   "RSA",
+				Algorithm: "UNMATCHED_ALGORITHM",
+				Use:       "sig",
+				Modulus:   modulus,
+				Exponent:  exponent,
+			},
+		},
+	}
+
+	if err := iDTokenPointer.VerifySignature(jWKsResponse); err == nil {
+		t.Fatalf("expect error caused by unmatched alg of key set")
+	}
+
+	jWKsResponse = jwks.Response{
+		KeySets: []jwks.KeySet{
+			{
+				KeyID:     "KEY_ID",
+				KeyType:   "RSA",
+				Algorithm: "RS256",
+				Use:       "sig",
+				Modulus:   "",
+				Exponent:  exponent,
+			},
+		},
+	}
+
+	if err := iDTokenPointer.VerifySignature(jWKsResponse); err == nil {
+		t.Fatalf("expect error caused by not existing modulus of key set")
+	}
+
+	jWKsResponse = jwks.Response{
+		KeySets: []jwks.KeySet{
+			{
+				KeyID:     "KEY_ID",
+				KeyType:   "RSA",
+				Algorithm: "RS256",
+				Use:       "sig",
+				Modulus:   modulus,
+				Exponent:  "",
+			},
+		},
+	}
+
+	if err := iDTokenPointer.VerifySignature(jWKsResponse); err == nil {
+		t.Fatalf("expect error caused by not existing exponent of key set")
+	}
+
+	jWKsResponse = jwks.Response{
+		KeySets: []jwks.KeySet{
+			{
+				KeyID:     "KEY_ID",
+				KeyType:   "RSA",
+				Algorithm: "RS256",
+				Use:       "sig",
+				Modulus:   "INVALID_MODULUS!!!",
+				Exponent:  exponent,
+			},
+		},
+	}
+
+	if err := iDTokenPointer.VerifySignature(jWKsResponse); err == nil {
+		t.Fatalf("expect error caused by invalid modulus of key set")
+	}
+
+	jWKsResponse = jwks.Response{
+		KeySets: []jwks.KeySet{
+			{
+				KeyID:     "KEY_ID",
+				KeyType:   "RSA",
+				Algorithm: "RS256",
+				Use:       "sig",
+				Modulus:   modulus,
+				Exponent:  "INVALID_EXPONENT!!!",
+			},
+		},
+	}
+
+	if err := iDTokenPointer.VerifySignature(jWKsResponse); err == nil {
+		t.Fatalf("expect error caused by invalid exponent of key set")
+	}
 }
