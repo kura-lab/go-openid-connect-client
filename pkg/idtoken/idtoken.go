@@ -91,7 +91,7 @@ func NewIDToken(oIDCConfig oidcconfig.Response, rawIDToken string) (*IDToken, er
 		if err := json.Unmarshal(iDTokenPayload.RawAudience, &iDTokenPayload.Audience); err != nil {
 			var audString string
 			if err := json.Unmarshal(iDTokenPayload.RawAudience, &audString); err != nil {
-				return nil, err
+				return nil, errors.New("unexpected type of aud claim. it assumes array type of string or string type")
 			}
 			iDTokenPayload.Audience = append(iDTokenPayload.Audience, audString)
 		}
@@ -178,7 +178,7 @@ func (iDToken *IDToken) generateRSAPublicKey(jWKsResponse jwks.Response) (rsa.Pu
 	if err != nil {
 		return rsa.PublicKey{}, err
 	}
-	decodedExponent, err := base64.StdEncoding.DecodeString(exponent)
+	decodedExponent, err := base64.RawURLEncoding.DecodeString(exponent)
 	if err != nil {
 		return rsa.PublicKey{}, err
 	}
@@ -200,7 +200,7 @@ func (iDToken *IDToken) generateRSAPublicKey(jWKsResponse jwks.Response) (rsa.Pu
 }
 
 func (iDToken *IDToken) generateECDSAPublicKey(jWKsResponse jwks.Response) (ecdsa.PublicKey, error) {
-	var encodedX, encodedY string
+	var encodedX, encodedY, curveAlgorithm string
 	for _, keySet := range jWKsResponse.KeySets {
 		if keySet.KeyID == iDToken.iDTokenHeader.KeyID {
 
@@ -214,6 +214,7 @@ func (iDToken *IDToken) generateECDSAPublicKey(jWKsResponse jwks.Response) (ecds
 
 			encodedX = keySet.XCoordinate
 			encodedY = keySet.YCoordinate
+			curveAlgorithm = keySet.Curve
 			break
 		}
 	}
@@ -225,24 +226,24 @@ func (iDToken *IDToken) generateECDSAPublicKey(jWKsResponse jwks.Response) (ecds
 	if err != nil {
 		return ecdsa.PublicKey{}, err
 	}
-	decodedY, err := base64.StdEncoding.DecodeString(encodedY)
+	decodedY, err := base64.RawURLEncoding.DecodeString(encodedY)
 	if err != nil {
 		return ecdsa.PublicKey{}, err
 	}
 
 	var x, y *big.Int
-	x = x.SetBytes(decodedX)
-	y = y.SetBytes(decodedY)
+	x = new(big.Int).SetBytes(decodedX)
+	y = new(big.Int).SetBytes(decodedY)
 
 	var curve elliptic.Curve
-	if iDToken.iDTokenHeader.Algorithm == "ES256" {
+	if curveAlgorithm == "P-256" {
 		curve = elliptic.P256()
-	} else if iDToken.iDTokenHeader.Algorithm == "ES384" {
+	} else if curveAlgorithm == "P-384" {
 		curve = elliptic.P384()
-	} else if iDToken.iDTokenHeader.Algorithm == "ES512" {
+	} else if curveAlgorithm == "P-521" {
 		curve = elliptic.P521()
 	} else {
-		return ecdsa.PublicKey{}, errors.New("unsupported signature algorithm. actual algorithm in id token's header is " + iDToken.iDTokenHeader.Algorithm)
+		return ecdsa.PublicKey{}, errors.New("unsupported curve algorithm. actual algorithm in jwk set is " + curveAlgorithm)
 	}
 
 	return ecdsa.PublicKey{Curve: curve, X: x, Y: y}, nil
@@ -371,7 +372,7 @@ func (iDToken *IDToken) VerifyPayloadClaims(options ...Option) error {
 	if iDToken.expectedNonce != "" {
 		if iDToken.expectedNonce != iDToken.iDTokenPayload.Nonce {
 			return errors.New("invalid nonce. actual nonce in id token's payload is " +
-				iDToken.iDTokenPayload.Nonce + ". attakers might replay attack(playback attack)")
+				iDToken.iDTokenPayload.Nonce + ". attackers might replay attack(playback attack)")
 		}
 	}
 
@@ -388,7 +389,7 @@ func (iDToken *IDToken) VerifyPayloadClaims(options ...Option) error {
 		aTHash := myhash.GenerateHalfOfSHA256(iDToken.expectedAccessTokenAccessTokenHash)
 		if aTHash != iDToken.iDTokenPayload.AccessTokenHash {
 			return errors.New("invalid access token hash. actual hash in id token's payload is " +
-				iDToken.iDTokenPayload.AccessTokenHash + ". expected hash is " + aTHash + ". the access token issued with id token might be altered by attakers")
+				iDToken.iDTokenPayload.AccessTokenHash + ". expected hash is " + aTHash + ". the access token issued with id token might be altered by attackers")
 		}
 	}
 
