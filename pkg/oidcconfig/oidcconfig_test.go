@@ -13,6 +13,7 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 		UserInfoEndpoint("https://op.example.com/userinfo"),
 		JWKsURI("https://op.example.com/jwks"),
 		TokenEndpointAuthMethodsSupported([]string{"client_secret_basic", "client_secret_post"}),
+		IDTokenSigningAlgValuesSupported([]string{"RS256", "RS512"}),
 	)
 	response := config.Response()
 
@@ -39,6 +40,12 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 	for key, value := range []string{"client_secret_basic", "client_secret_post"} {
 		if response.TokenEndpointAuthMethodsSupported[key] != value {
 			t.Errorf("invalid token_endpoint_auth_methods_supported. expected: %v: %#v", value, response.TokenEndpointAuthMethodsSupported[key])
+		}
+	}
+
+	for key, value := range []string{"RS256", "RS512"} {
+		if response.IDTokenSigningAlgValuesSupported[key] != value {
+			t.Errorf("invalid id_token_signing_alg_values_supported. expected: %v: %#v", value, response.IDTokenSigningAlgValuesSupported[key])
 		}
 	}
 }
