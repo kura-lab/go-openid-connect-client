@@ -112,6 +112,8 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 		UserInfoEndpoint("https://op.example.com/userinfo"),
 		JWKsURI("https://op.example.com/jwks"),
 		TokenEndpointAuthMethodsSupported([]string{"client_secret_basic", "client_secret_post"}),
+		ResponseTypesSupported([]string{"code", "code token", "code token id_token"}),
+		ScopesSupported([]string{"openid", "email", "profile"}),
 		IDTokenSigningAlgValuesSupported([]string{"RS256", "RS512"}),
 	)
 	response := config.Response()
@@ -139,6 +141,18 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 	for key, value := range []string{"client_secret_basic", "client_secret_post"} {
 		if response.TokenEndpointAuthMethodsSupported[key] != value {
 			t.Errorf("invalid token_endpoint_auth_methods_supported. expected: %v: %#v", value, response.TokenEndpointAuthMethodsSupported[key])
+		}
+	}
+
+	for key, value := range []string{"code", "code token", "code token id_token"} {
+		if response.ResponseTypesSupported[key] != value {
+			t.Errorf("invalid response_types_supported. expected: %v: %#v", value, response.ResponseTypesSupported[key])
+		}
+	}
+
+	for key, value := range []string{"openid", "email", "profile"} {
+		if response.ScopesSupported[key] != value {
+			t.Errorf("invalid scopes_supported. expected: %v: %#v", value, response.ScopesSupported[key])
 		}
 	}
 
