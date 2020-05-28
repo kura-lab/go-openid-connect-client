@@ -104,6 +104,22 @@ func TokenEndpointAuthMethodsSupported(tokenEndpointAuthMethodsSupported []strin
 	}
 }
 
+// ResponseTypesSupported is functional option to add Response Type Supported.
+func ResponseTypesSupported(responseTypesSupported []string) Option {
+	return func(config *OIDCConfig) error {
+		config.responseTypesSupported = responseTypesSupported
+		return nil
+	}
+}
+
+// ScopesSupported is functional option to add Scopes Supported.
+func ScopesSupported(scopesSupported []string) Option {
+	return func(config *OIDCConfig) error {
+		config.scopesSupported = scopesSupported
+		return nil
+	}
+}
+
 // IDTokenSigningAlgValuesSupported is functional option to add ID Token Signing Algorithm Values Supported.
 func IDTokenSigningAlgValuesSupported(iDTokenSigningAlgValuesSupported []string) Option {
 	return func(config *OIDCConfig) error {
