@@ -38,7 +38,7 @@ type Response struct {
 	Zoneinfo            string `json:"zoneinfo"`
 	Locale              string `json:"locale"`
 	PhoneNumber         string `json:"phone_number"`
-	PhoneNumberVerified string `json:"phone_number_verified"`
+	PhoneNumberVerified bool   `json:"phone_number_verified"`
 	Address             struct {
 		Formatted     string `json:"formatted"`
 		StreetAddress string `json:"street_address"`
