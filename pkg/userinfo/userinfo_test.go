@@ -167,6 +167,59 @@ func TestNewUserInfoSuccesses(t *testing.T) {
 	if response.Address.Country != "JP" {
 		t.Errorf("invalid address/county. expected: JP, actual: %v", response.Address.Country)
 	}
+
+	gock.New("https://op.example.com").
+		MatchHeader("Content-Type", "^application/x-www-form-urlencoded$").
+		MatchHeader("Authorization", "^Bearer ACCESS_TOKEN$").
+		Post("/userinfo").
+		Reply(401).
+		SetHeader("WWW-Authenticate",
+			"realm=\"example\"",
+		).
+		JSON(map[string]interface{}{})
+
+	oIDCConfigPointer = oidcconfig.NewOIDCConfig(
+		oidcconfig.UserInfoEndpoint("https://op.example.com/userinfo"),
+	)
+
+	oIDCConfigResponse = oIDCConfigPointer.Response()
+
+	userInfoPointer = NewUserInfo(
+		oIDCConfigResponse,
+		"ACCESS_TOKEN",
+	)
+
+	err = userInfoPointer.Request()
+
+	if err != nil {
+		t.Fatalf("failed to request. err: %#v", err)
+	}
+
+	response = userInfoPointer.Response()
+
+	if response.Status != "401 Unauthorized" {
+		t.Errorf("invalid http status. expected: 401 Unauthorized, actual: %v", response.Status)
+	}
+
+	if response.StatusCode != 401 {
+		t.Errorf("invalid http status code. expected: 401 Unauthorized, actual: %v", response.StatusCode)
+	}
+
+	if response.WWWAuthenticate.Realm != "" {
+		t.Errorf("invalid realm. expected: (empty), actual: %v", response.WWWAuthenticate.Realm)
+	}
+
+	if response.WWWAuthenticate.Scope != "" {
+		t.Errorf("invalid scope. expected: (empty), actual: %v", response.WWWAuthenticate.Scope)
+	}
+
+	if response.WWWAuthenticate.Error != "" {
+		t.Errorf("invalid error. expected: (empty), actual: %v", response.WWWAuthenticate.Error)
+	}
+
+	if response.WWWAuthenticate.ErrorDescription != "" {
+		t.Errorf("invalid error description. expected: (empty), actual: %v", response.WWWAuthenticate.ErrorDescription)
+	}
 }
 
 func TestNewUserInfoFailures(t *testing.T) {
