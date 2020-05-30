@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/codechallengemethod"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/display"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/prompt"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/responsetype"
@@ -30,7 +31,7 @@ func TestNewAuthorizationSuccess(t *testing.T) {
 		Prompt(prompt.Login, prompt.Consent),
 		Display(display.Touch),
 		CodeChallenge(hash.GenerateSHA256("12345")),
-		CodeChallengeMethod("S256"),
+		CodeChallengeMethod(codechallengemethod.S256),
 		AuthenticationContextReferenceValues("urn:mace:incommon:iap:silver"),
 	)
 
