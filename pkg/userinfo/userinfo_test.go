@@ -228,7 +228,32 @@ func TestNewUserInfoFailures(t *testing.T) {
 	if response.WWWAuthenticate.ErrorDescription != "The access token expired" {
 		t.Errorf("invalid error description. expected: The access token expired, actual: %v", response.WWWAuthenticate.ErrorDescription)
 	}
+
+	gock.New("https://op.example.com").
+		MatchHeader("Content-Type", "^application/x-www-form-urlencoded$").
+		MatchHeader("Authorization", "^Bearer ACCESS_TOKEN$").
+		Post("/userinfo").
+		Reply(200).
+		BodyString("INVALID_BODY")
+
+	oIDCConfigPointer = oidcconfig.NewOIDCConfig(
+		oidcconfig.UserInfoEndpoint("https://op.example.com/userinfo"),
+	)
+
+	oIDCConfigResponse = oIDCConfigPointer.Response()
+
+	userInfoPointer = NewUserInfo(
+		oIDCConfigResponse,
+		"ACCESS_TOKEN",
+	)
+
+	err = userInfoPointer.Request()
+
+	if err == nil {
+		t.Fatalf("expect budy parsing error.")
+	}
 }
+
 func TestParseWWWAuthenticateHeader(t *testing.T) {
 
 	data := [][]interface{}{
