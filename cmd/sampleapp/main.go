@@ -15,6 +15,7 @@ import (
 	mycallback "github.com/kura-lab/go-openid-connect-client/pkg/callback"
 	"github.com/kura-lab/go-openid-connect-client/pkg/idtoken"
 	"github.com/kura-lab/go-openid-connect-client/pkg/token"
+	"github.com/kura-lab/go-openid-connect-client/pkg/token/granttype"
 	"github.com/kura-lab/go-openid-connect-client/pkg/userinfo"
 )
 
@@ -166,7 +167,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		credential.GetClientIDValue(),
 		credential.GetClientSecretValue(),
 		token.StatePass(statePass),
-		token.GrantType("authorization_code"),
+		token.GrantType(granttype.AuthorizationCode),
 		token.AuthorizationCode(callbackResponse.AuthorizationCode),
 		token.RedirectURI(configs.RedirectURI),
 	)
@@ -317,8 +318,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		oIDCConfigResponse,
 		credential.GetClientIDValue(),
 		credential.GetClientSecretValue(),
-		token.StatePass(statePass),
-		token.GrantType("refresh_token"),
+		token.GrantType(granttype.RefreshToken),
 		token.RefreshToken(tokenResponse.RefreshToken),
 	)
 
