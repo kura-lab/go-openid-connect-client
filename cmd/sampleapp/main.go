@@ -318,7 +318,6 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		oIDCConfigResponse,
 		credential.GetClientIDValue(),
 		credential.GetClientSecretValue(),
-		token.StatePass(statePass),
 		token.GrantType(granttype.RefreshToken),
 		token.RefreshToken(tokenResponse.RefreshToken),
 	)

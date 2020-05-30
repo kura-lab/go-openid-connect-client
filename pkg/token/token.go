@@ -11,6 +11,7 @@ import (
 
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 	"github.com/kura-lab/go-openid-connect-client/pkg/state"
+	"github.com/kura-lab/go-openid-connect-client/pkg/token/granttype"
 )
 
 // Response is struct for Token Response.
@@ -121,9 +122,11 @@ func RefreshToken(refreshToken string) Option {
 // Request is method to request Token Endpoint.
 func (token *Token) Request() (nerr error) {
 
-	if !token.statePass.VerificationResult {
-		nerr = errors.New("state parameter has not been verified or the verification result was false")
-		return
+	if token.grantType == granttype.AuthorizationCode {
+		if !token.statePass.VerificationResult {
+			nerr = errors.New("state parameter has not been verified or the verification result was false")
+			return
+		}
 	}
 
 	values := url.Values{}
