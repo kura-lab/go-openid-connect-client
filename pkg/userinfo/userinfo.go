@@ -59,19 +59,13 @@ type UserInfo struct {
 }
 
 // NewUserInfo is UserInfo constructor function.
-func NewUserInfo(oIDCConfig oidcconfig.Response, accessToken string, options ...Option) *UserInfo {
+func NewUserInfo(oIDCConfig oidcconfig.Response, accessToken string) *UserInfo {
 	userInfo := new(UserInfo)
 	userInfo.oIDCConfig = oIDCConfig
 	userInfo.accessToken = accessToken
 
-	for _, option := range options {
-		option(userInfo)
-	}
 	return userInfo
 }
-
-// Option is functional option for UserInfo struct initialization.
-type Option func(*UserInfo) error
 
 // Request is method to request UserInfo Endpoint.
 func (userInfo *UserInfo) Request() (nerr error) {
