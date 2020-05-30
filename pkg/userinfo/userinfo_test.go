@@ -303,7 +303,7 @@ func TestNewUserInfoFailures(t *testing.T) {
 	err = userInfoPointer.Request()
 
 	if err == nil {
-		t.Fatalf("expect budy parsing error.")
+		t.Fatalf("expect json body parsing error.")
 	}
 }
 
