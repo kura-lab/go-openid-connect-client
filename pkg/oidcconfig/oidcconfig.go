@@ -20,6 +20,7 @@ type Response struct {
 	ResponseTypesSupported            []string `json:"response_types_supported"`
 	ScopesSupported                   []string `json:"scopes_supported"`
 	IDTokenSigningAlgValuesSupported  []string `json:"id_token_signing_alg_values_supported"`
+	SubjectTypesSupported             []string `json:"subject_types_supported"`
 }
 
 // OIDCConfig is struct to request OpenID Configuration Endpoint.
