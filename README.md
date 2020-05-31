@@ -11,3 +11,9 @@ The library is implemented using only the standard packages provided by Go, maki
 Since it is a simple implementation as much as possible, you need to implement processing such as cache and session management, but it provides the minimum necessary functions (e.g., issuing Access Token, ID Token signature verification etc.) for RP of OpenID Connect.  
 In addition, it strives to comply with OAuth 2.0 and its extended profiles as well as OpenID Connect.  
 First, let's start the application. Then, check the flow of processing with the output log.  
+
+## Specifications
+
+* [OpenID Connect Core 1.0 incorporating errata set 1](https://openid.net/specs/openid-connect-core-1_0.html)
+* [The OAuth 2.0 Authorization Framework](https://tools.ietf.org/html/rfc6749)
+* [The OAuth 2.0 Authorization Framework: Bearer Token Usage](https://tools.ietf.org/html/rfc6750)
