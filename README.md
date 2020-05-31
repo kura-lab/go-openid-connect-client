@@ -14,6 +14,12 @@ First, let's start the application. Then, check the flow of processing with the 
 
 ## Specifications
 
+### OpenID Foundation
 * [OpenID Connect Core 1.0 incorporating errata set 1](https://openid.net/specs/openid-connect-core-1_0.html)
+* [OpenID Connect Dynamic Client Registration 1.0 incorporating errata set 1](https://openid.net/specs/openid-connect-registration-1_0.html)
+* [OAuth 2.0 Form Post Response Mode](https://openid.net/specs/oauth-v2-form-post-response-mode-1_0.html)
+
+### IETF
 * [The OAuth 2.0 Authorization Framework](https://tools.ietf.org/html/rfc6749)
 * [The OAuth 2.0 Authorization Framework: Bearer Token Usage](https://tools.ietf.org/html/rfc6750)
+* [OAuth 2.0 Authorization Server Metadata](https://tools.ietf.org/html/rfc8414)
