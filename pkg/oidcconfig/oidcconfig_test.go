@@ -39,6 +39,10 @@ func TestNewSuccess(t *testing.T) {
 				"RS256",
 				"ES256",
 			},
+			"subject_types_supported": []string{
+				"public",
+				"pairwise",
+			},
 		})
 
 	oIDCConfigPointer := New(
@@ -99,6 +103,12 @@ func TestNewSuccess(t *testing.T) {
 	for key, value := range []string{"RS256", "ES256"} {
 		if response.IDTokenSigningAlgValuesSupported[key] != value {
 			t.Errorf("invalid id_token_signing_alg_values_supported. expected: %v: %#v", value, response.IDTokenSigningAlgValuesSupported[key])
+		}
+	}
+
+	for key, value := range []string{"public", "pairwise"} {
+		if response.SubjectTypesSupported[key] != value {
+			t.Errorf("invalid subject_types_supported. expected: %v: %#v", value, response.SubjectTypesSupported[key])
 		}
 	}
 }
