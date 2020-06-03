@@ -27,7 +27,7 @@ func main() {
 	// register handlers with multiplexer
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "http://localhost:8080/index", http.StatusMovedPermanently)
+		http.Redirect(w, r, "/index", http.StatusMovedPermanently)
 	})
 	mux.HandleFunc("/index", index)
 	mux.HandleFunc("/authentication", authentication)
@@ -35,7 +35,7 @@ func main() {
 
 	// server settings
 	server := &http.Server{
-		Addr:           "0.0.0.0:8080",
+		Addr:           "127.0.0.1:8080",
 		Handler:        mux,
 		ReadTimeout:    time.Second * 10,
 		WriteTimeout:   time.Second * 600,
