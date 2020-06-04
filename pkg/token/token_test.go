@@ -216,7 +216,7 @@ func TestNewTokenRefreshTokenSuccess(t *testing.T) {
 		"CLIENT_ID",
 		"CLIENT_SECRET",
 		GrantType(granttype.RefreshToken),
-		AuthorizationCode("REFRESH_TOKEN"),
+		RefreshToken("REFRESH_TOKEN"),
 	)
 
 	err := tokenPointer.Request()
