@@ -292,4 +292,39 @@ func TestNewTokenFailures(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expect json parsing error.")
 	}
+
+	statePass = state.Pass{VerificationResult: false}
+
+	tokenPointer = NewToken(
+		oIDCConfigResponse,
+		"CLIENT_ID",
+		"CLIENT_SECRET",
+		StatePass(statePass),
+		GrantType(granttype.AuthorizationCode),
+		AuthorizationCode("AUTHORIZATION_CODE"),
+		RedirectURI("REDIRECT_URI"),
+		CodeVerifier("CODE_VERIFIER"),
+	)
+
+	err = tokenPointer.Request()
+
+	if err == nil {
+		t.Fatalf("expect state pass error.")
+	}
+
+	tokenPointer = NewToken(
+		oIDCConfigResponse,
+		"CLIENT_ID",
+		"CLIENT_SECRET",
+		GrantType(granttype.AuthorizationCode),
+		AuthorizationCode("AUTHORIZATION_CODE"),
+		RedirectURI("REDIRECT_URI"),
+		CodeVerifier("CODE_VERIFIER"),
+	)
+
+	err = tokenPointer.Request()
+
+	if err == nil {
+		t.Fatalf("expect state pass error.")
+	}
 }
