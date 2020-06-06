@@ -76,7 +76,7 @@ func TestNewRegistrationSuccess(t *testing.T) {
 			"authorization_code",
 			"refresh_token",
 		}),
-		ClientName("My Example"),
+		Name("My Example"),
 		LogoURI("https://rp.example.com/logo.png"),
 		SubjectType("pairwise"),
 		TokenEndpointAuthMethod("client_secret_basic"),

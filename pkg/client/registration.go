@@ -79,8 +79,8 @@ func GrantTypes(grantTypes []string) Option {
 	}
 }
 
-// ClientName is functional option to add "client_name" parameter.
-func ClientName(clientName string) Option {
+// Name is functional option to add "client_name" parameter.
+func Name(clientName string) Option {
 	return func(registration *Registration) error {
 		registration.request["client_name"] = clientName
 		return nil
@@ -95,7 +95,7 @@ func LogoURI(logoURI string) Option {
 	}
 }
 
-//  SubjectTypeis functional option to add "subject_type" parameter.
+// SubjectType is functional option to add "subject_type" parameter.
 func SubjectType(subjectType string) Option {
 	return func(registration *Registration) error {
 		registration.request["subject_type"] = subjectType
