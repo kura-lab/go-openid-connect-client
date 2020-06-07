@@ -5,22 +5,16 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"regexp"
-	"strings"
 
+	"github.com/kura-lab/go-openid-connect-client/pkg/header"
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
 // Response is struct for UserInfo Response.
 type Response struct {
-	Status          string
-	StatusCode      int
-	WWWAuthenticate struct {
-		Realm            string
-		Scope            string
-		Error            string
-		ErrorDescription string
-	}
+	Status              string
+	StatusCode          int
+	WWWAuthenticate     header.WWWAuthenticate
 	Subject             string `json:"sub"`
 	Name                string `json:"name"`
 	GivenName           string `json:"given_name"`
@@ -110,7 +104,7 @@ func (userInfo *UserInfo) Request() (nerr error) {
 	userInfo.response = userInfoResponse
 
 	if response.Header.Get("WWW-Authenticate") != "" {
-		parsed := parseWWWAuthenticateHeader(response.Header.Get("WWW-Authenticate"))
+		parsed := header.ParseWWWAuthenticateHeader(response.Header.Get("WWW-Authenticate"))
 		if parsed["realm"] != "" {
 			userInfo.response.WWWAuthenticate.Realm = parsed["realm"]
 		}
@@ -131,30 +125,4 @@ func (userInfo *UserInfo) Request() (nerr error) {
 // Response is getter method of Response struct
 func (userInfo *UserInfo) Response() Response {
 	return userInfo.response
-}
-
-func parseWWWAuthenticateHeader(header string) map[string]string {
-
-	rep := regexp.MustCompile(`\ABearer `)
-	if !rep.MatchString(header) {
-		return map[string]string{}
-	}
-
-	header = rep.ReplaceAllString(header, "")
-
-	header = strings.NewReplacer(
-		"\r\n", "",
-		"\r", "",
-		"\n", "",
-	).Replace(header)
-
-	attributes := strings.Split(header, ",")
-
-	parsed := map[string]string{}
-	for _, attribute := range attributes {
-		splited := strings.Split(strings.TrimSpace(attribute), "=")
-		parsed[splited[0]] = strings.Trim(splited[1], "\"")
-	}
-
-	return parsed
 }

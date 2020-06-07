@@ -16,6 +16,7 @@ type Response struct {
 	TokenEndpoint                     string   `json:"token_endpoint"`
 	UserInfoEndpoint                  string   `json:"userinfo_endpoint"`
 	JWKsURI                           string   `json:"jwks_uri"`
+	RegistrationEndpoint              string   `json:"registration_endpoint"`
 	TokenEndpointAuthMethodsSupported []string `json:"token_endpoint_auth_methods_supported"`
 	ResponseTypesSupported            []string `json:"response_types_supported"`
 	ScopesSupported                   []string `json:"scopes_supported"`
@@ -32,6 +33,7 @@ type OIDCConfig struct {
 	tokenEndpoint                     string
 	userInfoEndpoint                  string
 	jWKsURI                           string
+	registrationEndpoint              string
 	tokenEndpointAuthMethodsSupported []string
 	responseTypesSupported            []string
 	scopesSupported                   []string
@@ -61,6 +63,14 @@ type Option func(*OIDCConfig) error
 func Issuer(issuer string) Option {
 	return func(config *OIDCConfig) error {
 		config.issuer = issuer
+		return nil
+	}
+}
+
+// RegistrationEndpoint is functional option to add Client Registration Endpoint.
+func RegistrationEndpoint(registrationEndpoint string) Option {
+	return func(config *OIDCConfig) error {
+		config.registrationEndpoint = registrationEndpoint
 		return nil
 	}
 }
@@ -188,6 +198,9 @@ func (config *OIDCConfig) Response() Response {
 	}
 	if config.jWKsURI != "" {
 		config.response.JWKsURI = config.jWKsURI
+	}
+	if config.registrationEndpoint != "" {
+		config.response.RegistrationEndpoint = config.registrationEndpoint
 	}
 	if len(config.tokenEndpointAuthMethodsSupported) > 0 {
 		config.response.TokenEndpointAuthMethodsSupported = config.tokenEndpointAuthMethodsSupported
