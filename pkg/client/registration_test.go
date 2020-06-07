@@ -41,7 +41,7 @@ func TestNewRegistrationSuccess(t *testing.T) {
 			"client_secret":             "CLIENT_SECRET",
 			"client_secret_expires_at":  0,
 			"registration_access_token": "REGISTRATION_ACCESS_TOKEN",
-			"registration_client_uri":   "https://op.example.com/registration?client_id=CLINET_ID",
+			"registration_client_uri":   "https://op.example.com/registration?client_id=CLIENT_ID",
 			"token_endpoint_auth_method": []string{
 				"client_secret_basic",
 			},
@@ -116,8 +116,8 @@ func TestNewRegistrationSuccess(t *testing.T) {
 		t.Errorf("invalid registration_access_token. expected: REGISTRATION_ACCESS_TOKEN, actual: %v", response.RegistrationAccessToken)
 	}
 
-	if response.RegistrationClientURI != "https://op.example.com/registration?client_id=CLINET_ID" {
-		t.Errorf("invalid registration_client_uri. expected: https://op.example.com/registration?client_id=CLINET_ID, actual: %v", response.RegistrationClientURI)
+	if response.RegistrationClientURI != "https://op.example.com/registration?client_id=CLIENT_ID" {
+		t.Errorf("invalid registration_client_uri. expected: https://op.example.com/registration?client_id=CLIENT_ID, actual: %v", response.RegistrationClientURI)
 	}
 
 	if response.ClientIDIssuedAt != 0 {
