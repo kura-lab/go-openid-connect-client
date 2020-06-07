@@ -209,11 +209,11 @@ func TestNewRegistrationFailure(t *testing.T) {
 	response := registrationPointer.Response()
 
 	if response.Status != "400 Bad Request" {
-		t.Errorf("invalid http status. expected: 200 OK, actual: %v", response.Status)
+		t.Errorf("invalid http status. expected: 400 Bad Request, actual: %v", response.Status)
 	}
 
 	if response.StatusCode != 400 {
-		t.Errorf("invalid http status code. expected: 200, actual: %v", response.StatusCode)
+		t.Errorf("invalid http status code. expected: 400, actual: %v", response.StatusCode)
 	}
 
 	if response.Error != "invalid_redirect_uri" {
