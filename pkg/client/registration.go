@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/kura-lab/go-openid-connect-client/pkg/header"
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
 
@@ -14,6 +15,7 @@ import (
 type Response struct {
 	Status                  string
 	StatusCode              int
+	WWWAuthenticate         header.WWWAuthenticate
 	ClientID                string   `json:"client_id"`
 	ClientSecret            string   `json:"client_secret"`
 	ClientSecretExpiresAt   int      `json:"client_secret_expires_at"`
