@@ -13,6 +13,7 @@ type WWWAuthenticate struct {
 	ErrorDescription string
 }
 
+// ParseWWWAuthenticateHeader is function to parse WWW-Authenticate Bearer header.
 func ParseWWWAuthenticateHeader(header string) map[string]string {
 
 	rep := regexp.MustCompile(`\ABearer `)
