@@ -136,7 +136,7 @@ func (authorization *Authorization) GenerateURL() (string, error) {
 		authorization.oIDCConfig.ResponseTypesSupported,
 	) {
 		return "", errors.New("unsupported response type. added response type is " + fmt.Sprintf("%v", authorization.responseType) +
-			". expected response type is " + fmt.Sprintf("%v", authorization.oIDCConfig.ResponseTypesSupported))
+			". supported response type is " + fmt.Sprintf("%v", authorization.oIDCConfig.ResponseTypesSupported))
 	}
 	q.Set("response_type", strings.Join(authorization.responseType, " "))
 

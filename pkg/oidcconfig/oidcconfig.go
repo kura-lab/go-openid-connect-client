@@ -115,7 +115,7 @@ func TokenEndpointAuthMethodsSupported(tokenEndpointAuthMethodsSupported []strin
 	}
 }
 
-// ResponseTypesSupported is functional option to add Response Type Supported.
+// ResponseTypesSupported is functional option to add Response Types Supported.
 func ResponseTypesSupported(responseTypesSupported []string) Option {
 	return func(config *OIDCConfig) error {
 		config.responseTypesSupported = responseTypesSupported
