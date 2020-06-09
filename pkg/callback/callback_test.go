@@ -123,3 +123,38 @@ func TestCallbackByURISuccesses(t *testing.T) {
 		t.Errorf("callback error uri. expected: https://op.example.com/error, actual: %v", response.ErrorURI)
 	}
 }
+
+func TestCallbackByFormSuccesses(t *testing.T) {
+
+	values := url.Values{}
+	values.Add("state", "xyz")
+	values.Add("code", "abc")
+	values.Add("access_token", "ACCESS_TOKEN")
+	values.Add("id_token", "ID_TOKEN")
+
+	callbackPointer := NewCallback(
+		Form(values),
+	)
+	if err := callbackPointer.Parse(); err != nil {
+		t.Errorf("parse error. error: %#v", err)
+	}
+	if pass, err := callbackPointer.VerifyState("xyz"); err != nil {
+		t.Errorf("verify state error. error: %#v", err)
+		if !pass.VerificationResult {
+			t.Errorf("state pass error. expected: true, pass: %#v", pass)
+		}
+	}
+	response := callbackPointer.Response()
+	if response.State != "xyz" {
+		t.Errorf("state error. expected: xyz, actual: %v", response.State)
+	}
+	if response.AuthorizationCode != "abc" {
+		t.Errorf("authorization code error. expected: abc, actual: %v", response.AuthorizationCode)
+	}
+	if response.AccessToken != "ACCESS_TOKEN" {
+		t.Errorf("access token error. expected: ACCESS_TOKEN, actual: %v", response.AccessToken)
+	}
+	if response.IDToken != "ID_TOKEN" {
+		t.Errorf("id token error. expected: ID_TOKEN, actual: %v", response.IDToken)
+	}
+}

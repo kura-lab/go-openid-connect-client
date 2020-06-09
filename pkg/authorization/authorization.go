@@ -9,6 +9,7 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/responsetype"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/scope"
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
+	mystrings "github.com/kura-lab/go-openid-connect-client/pkg/strings"
 )
 
 // Authorization is struct to generate Authorization Endpoint URL.
@@ -18,6 +19,7 @@ type Authorization struct {
 	clientID     string
 	redirectURI  string
 	responseType []string
+	responseMode string
 	scope        []string
 	// recommended
 	state string
@@ -52,6 +54,14 @@ type Option func(*Authorization) error
 func ResponseType(responseType ...string) Option {
 	return func(authorization *Authorization) error {
 		authorization.responseType = responseType
+		return nil
+	}
+}
+
+// ResponseMode is functional option to add "response_mode" parameter.
+func ResponseMode(responseMode string) Option {
+	return func(authorization *Authorization) error {
+		authorization.responseMode = responseMode
 		return nil
 	}
 }
@@ -136,9 +146,18 @@ func (authorization *Authorization) GenerateURL() (string, error) {
 		authorization.oIDCConfig.ResponseTypesSupported,
 	) {
 		return "", errors.New("unsupported response type. added response type is " + fmt.Sprintf("%v", authorization.responseType) +
-			". expected response type is " + fmt.Sprintf("%v", authorization.oIDCConfig.ResponseTypesSupported))
+			". supported response type is " + fmt.Sprintf("%v", authorization.oIDCConfig.ResponseTypesSupported))
 	}
 	q.Set("response_type", strings.Join(authorization.responseType, " "))
+
+	if len(authorization.oIDCConfig.ResponseModesSupported) > 0 && !mystrings.Contains(
+		authorization.responseMode,
+		authorization.oIDCConfig.ResponseModesSupported,
+	) {
+		return "", errors.New("unsupported response mode. added response mode is " + authorization.responseMode +
+			". supported response modes are " + fmt.Sprintf("%v", authorization.oIDCConfig.ResponseModesSupported))
+	}
+	q.Set("response_mode", authorization.responseMode)
 
 	if len(authorization.oIDCConfig.ScopesSupported) > 0 && !validateScope(
 		authorization.scope,

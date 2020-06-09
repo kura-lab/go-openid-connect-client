@@ -19,6 +19,7 @@ type Response struct {
 	RegistrationEndpoint              string   `json:"registration_endpoint"`
 	TokenEndpointAuthMethodsSupported []string `json:"token_endpoint_auth_methods_supported"`
 	ResponseTypesSupported            []string `json:"response_types_supported"`
+	ResponseModesSupported            []string `json:"response_modes_supported"`
 	ScopesSupported                   []string `json:"scopes_supported"`
 	IDTokenSigningAlgValuesSupported  []string `json:"id_token_signing_alg_values_supported"`
 	SubjectTypesSupported             []string `json:"subject_types_supported"`
@@ -36,6 +37,7 @@ type OIDCConfig struct {
 	registrationEndpoint              string
 	tokenEndpointAuthMethodsSupported []string
 	responseTypesSupported            []string
+	responseModesSupported            []string
 	scopesSupported                   []string
 	iDTokenSigningAlgValuesSupported  []string
 }
@@ -115,10 +117,18 @@ func TokenEndpointAuthMethodsSupported(tokenEndpointAuthMethodsSupported []strin
 	}
 }
 
-// ResponseTypesSupported is functional option to add Response Type Supported.
+// ResponseTypesSupported is functional option to add Response Types Supported.
 func ResponseTypesSupported(responseTypesSupported []string) Option {
 	return func(config *OIDCConfig) error {
 		config.responseTypesSupported = responseTypesSupported
+		return nil
+	}
+}
+
+// ResponseModesSupported is functional option to add Response Modes Supported.
+func ResponseModesSupported(responseModesSupported []string) Option {
+	return func(config *OIDCConfig) error {
+		config.responseModesSupported = responseModesSupported
 		return nil
 	}
 }
@@ -207,6 +217,9 @@ func (config *OIDCConfig) Response() Response {
 	}
 	if len(config.responseTypesSupported) > 0 {
 		config.response.ResponseTypesSupported = config.responseTypesSupported
+	}
+	if len(config.responseModesSupported) > 0 {
+		config.response.ResponseModesSupported = config.responseModesSupported
 	}
 	if len(config.scopesSupported) > 0 {
 		config.response.ScopesSupported = config.scopesSupported
