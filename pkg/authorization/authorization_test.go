@@ -7,6 +7,7 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/codechallengemethod"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/display"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/prompt"
+	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/responsemode"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/responsetype"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/scope"
 	"github.com/kura-lab/go-openid-connect-client/pkg/hash"
@@ -25,6 +26,7 @@ func TestNewAuthorizationSuccess(t *testing.T) {
 		"CLIENT_ID",
 		"https://rp.example.com/callback",
 		ResponseType(responsetype.Code, responsetype.IDToken),
+		ResponseMode(responsemode.FormPost),
 		Scope(scope.OpenID, scope.Email, scope.Profile),
 		State("abc"),
 		Nonce("xyz"),
@@ -69,6 +71,10 @@ func TestNewAuthorizationSuccess(t *testing.T) {
 
 	if query.Get("response_type") != "code id_token" {
 		t.Errorf("invalid response type. expected: code id_token, actual: %v", query.Get("response_type"))
+	}
+
+	if query.Get("response_mode") != "form_post" {
+		t.Errorf("invalid response mode. expected: form_post, actual: %v", query.Get("response_mode"))
 	}
 
 	if query.Get("scope") != "openid email profile" {
@@ -132,6 +138,7 @@ func TestNewAuthorizationFailures(t *testing.T) {
 	config = oidcconfig.NewOIDCConfig(
 		oidcconfig.AuthorizationEndpoint("https://op.example.com/authorization"),
 		oidcconfig.ResponseTypesSupported([]string{"code", "code token"}),
+		oidcconfig.ResponseModesSupported([]string{"query", "fragment"}),
 		oidcconfig.ScopesSupported([]string{"openid", "email", "profile"}),
 	)
 	oIDCConfigResponse = config.Response()
@@ -149,6 +156,25 @@ func TestNewAuthorizationFailures(t *testing.T) {
 	authorizationURL, err = authorizationPotinter.GenerateURL()
 	if err == nil {
 		t.Fatalf("expect response type error.")
+	}
+	if authorizationURL != "" {
+		t.Fatalf("expect empty string.")
+	}
+
+	authorizationPotinter = NewAuthorization(
+		oIDCConfigResponse,
+		"CLIENT_ID",
+		"https://rp.example.com/callback",
+		ResponseType(responsetype.IDToken),
+		ResponseMode(responsemode.FormPost),
+		Scope(scope.OpenID, scope.Email, scope.Profile),
+		State("abc"),
+		Nonce("xyz"),
+	)
+
+	authorizationURL, err = authorizationPotinter.GenerateURL()
+	if err == nil {
+		t.Fatalf("expect response mode error.")
 	}
 	if authorizationURL != "" {
 		t.Fatalf("expect empty string.")
