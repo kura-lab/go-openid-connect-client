@@ -30,6 +30,11 @@ func TestNewSuccess(t *testing.T) {
 				"code",
 				"code token id_token",
 			},
+			"response_modes_supported": []string{
+				"form_post",
+				"query",
+				"fragment",
+			},
 			"scopes_supported": []string{
 				"openid",
 				"email",
@@ -99,6 +104,12 @@ func TestNewSuccess(t *testing.T) {
 		}
 	}
 
+	for key, value := range []string{"form_post", "query", "fragment"} {
+		if response.ResponseModesSupported[key] != value {
+			t.Errorf("invalid response_modes_supported. expected: %v: %#v", value, response.ResponseModesSupported[key])
+		}
+	}
+
 	for key, value := range []string{"openid", "email", "profile", "address"} {
 		if response.ScopesSupported[key] != value {
 			t.Errorf("invalid scopes_supported. expected: %v: %#v", value, response.ScopesSupported[key])
@@ -129,6 +140,7 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 		RegistrationEndpoint("https://op.example.com/registration"),
 		TokenEndpointAuthMethodsSupported([]string{"client_secret_basic", "client_secret_post"}),
 		ResponseTypesSupported([]string{"code", "code token", "code token id_token"}),
+		ResponseModesSupported([]string{"form_post", "query", "fragment"}),
 		ScopesSupported([]string{"openid", "email", "profile"}),
 		IDTokenSigningAlgValuesSupported([]string{"RS256", "RS512"}),
 	)
@@ -167,6 +179,12 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 	for key, value := range []string{"code", "code token", "code token id_token"} {
 		if response.ResponseTypesSupported[key] != value {
 			t.Errorf("invalid response_types_supported. expected: %v: %#v", value, response.ResponseTypesSupported[key])
+		}
+	}
+
+	for key, value := range []string{"form_post", "query", "fragment"} {
+		if response.ResponseModesSupported[key] != value {
+			t.Errorf("invalid response_modes_supported. expected: %v: %#v", value, response.ResponseModesSupported[key])
 		}
 	}
 
