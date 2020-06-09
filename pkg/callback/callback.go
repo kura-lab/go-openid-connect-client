@@ -11,6 +11,8 @@ import (
 type Response struct {
 	State             string
 	AuthorizationCode string
+	AccessToken       string
+	IDToken           string
 	Error             string
 	ErrorDescription  string
 	ErrorURI          string
@@ -20,6 +22,7 @@ type Response struct {
 type Callback struct {
 	queryString string
 	uRI         *url.URL
+	form        url.Values
 	response    Response
 }
 
@@ -52,39 +55,57 @@ func URI(uRI *url.URL) Option {
 	}
 }
 
-// Parse is method to parse callback query.
+// Form is functional option to add callback post form.
+func Form(form url.Values) Option {
+	return func(callback *Callback) error {
+		callback.form = form
+		return nil
+	}
+}
+
+// Parse is method to parse callback query or body parameters.
 func (callback *Callback) Parse() error {
 
-	var query url.Values
+	var values url.Values
 	if callback.queryString != "" {
 		q, err := url.ParseQuery(callback.queryString)
 		if err != nil {
 			return errors.New("failed to parse callback uri")
 		}
-		query = q
+		values = q
 	} else if callback.uRI != nil {
-		query = callback.uRI.Query()
+		values = callback.uRI.Query()
+	} else if callback.form != nil {
+		values = callback.form
 	} else {
 		return errors.New("insufficient parameters. set callback query string or callback uri with functional option")
 	}
 
-	if state, ok := query["state"]; ok {
+	if state, ok := values["state"]; ok {
 		callback.response.State = state[0]
 	}
 
-	if authorizationCode, ok := query["code"]; ok {
+	if authorizationCode, ok := values["code"]; ok {
 		callback.response.AuthorizationCode = authorizationCode[0]
 	}
 
-	if callbackError, ok := query["error"]; ok {
+	if accessToken, ok := values["access_token"]; ok {
+		callback.response.AccessToken = accessToken[0]
+	}
+
+	if iDToken, ok := values["id_token"]; ok {
+		callback.response.IDToken = iDToken[0]
+	}
+
+	if callbackError, ok := values["error"]; ok {
 		callback.response.Error = callbackError[0]
 	}
 
-	if errorDescription, ok := query["error_description"]; ok {
+	if errorDescription, ok := values["error_description"]; ok {
 		callback.response.ErrorDescription = errorDescription[0]
 	}
 
-	if errorURI, ok := query["error_uri"]; ok {
+	if errorURI, ok := values["error_uri"]; ok {
 		callback.response.ErrorURI = errorURI[0]
 	}
 
