@@ -16,6 +16,7 @@ type Response struct {
 	AuthorizationEndpoint             string   `json:"authorization_endpoint"`
 	TokenEndpoint                     string   `json:"token_endpoint"`
 	UserInfoEndpoint                  string   `json:"userinfo_endpoint"`
+	RevocationEndpoint                string   `json:"revocation_endpoint"`
 	JWKsURI                           string   `json:"jwks_uri"`
 	TokenEndpointAuthMethodsSupported []string `json:"token_endpoint_auth_methods_supported"`
 	ResponseTypesSupported            []string `json:"response_types_supported"`
@@ -35,6 +36,7 @@ type OIDCConfig struct {
 	userInfoEndpoint                  string
 	jWKsURI                           string
 	registrationEndpoint              string
+	revocationEndpoint                string
 	tokenEndpointAuthMethodsSupported []string
 	responseTypesSupported            []string
 	responseModesSupported            []string
@@ -97,6 +99,14 @@ func TokenEndpoint(tokenEndpoint string) Option {
 func UserInfoEndpoint(userInfoEndpoint string) Option {
 	return func(config *OIDCConfig) error {
 		config.userInfoEndpoint = userInfoEndpoint
+		return nil
+	}
+}
+
+// RevocationEndpoint is functional option to add OAuth 2.0 Token Revocation Endpoint.
+func RevocationEndpoint(revocationEndpoint string) Option {
+	return func(config *OIDCConfig) error {
+		config.revocationEndpoint = revocationEndpoint
 		return nil
 	}
 }
@@ -208,6 +218,9 @@ func (config *OIDCConfig) Response() Response {
 	}
 	if config.userInfoEndpoint != "" {
 		config.response.UserInfoEndpoint = config.userInfoEndpoint
+	}
+	if config.revocationEndpoint != "" {
+		config.response.RevocationEndpoint = config.revocationEndpoint
 	}
 	if config.jWKsURI != "" {
 		config.response.JWKsURI = config.jWKsURI
