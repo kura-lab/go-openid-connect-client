@@ -12,11 +12,11 @@ type Response struct {
 	Status                            string
 	StatusCode                        int
 	Issuer                            string   `json:"issuer"`
+	RegistrationEndpoint              string   `json:"registration_endpoint"`
 	AuthorizationEndpoint             string   `json:"authorization_endpoint"`
 	TokenEndpoint                     string   `json:"token_endpoint"`
 	UserInfoEndpoint                  string   `json:"userinfo_endpoint"`
 	JWKsURI                           string   `json:"jwks_uri"`
-	RegistrationEndpoint              string   `json:"registration_endpoint"`
 	TokenEndpointAuthMethodsSupported []string `json:"token_endpoint_auth_methods_supported"`
 	ResponseTypesSupported            []string `json:"response_types_supported"`
 	ResponseModesSupported            []string `json:"response_modes_supported"`
@@ -197,6 +197,9 @@ func (config *OIDCConfig) Response() Response {
 	if config.issuer != "" {
 		config.response.Issuer = config.issuer
 	}
+	if config.registrationEndpoint != "" {
+		config.response.RegistrationEndpoint = config.registrationEndpoint
+	}
 	if config.authorizationEndpoint != "" {
 		config.response.AuthorizationEndpoint = config.authorizationEndpoint
 	}
@@ -208,9 +211,6 @@ func (config *OIDCConfig) Response() Response {
 	}
 	if config.jWKsURI != "" {
 		config.response.JWKsURI = config.jWKsURI
-	}
-	if config.registrationEndpoint != "" {
-		config.response.RegistrationEndpoint = config.registrationEndpoint
 	}
 	if len(config.tokenEndpointAuthMethodsSupported) > 0 {
 		config.response.TokenEndpointAuthMethodsSupported = config.tokenEndpointAuthMethodsSupported

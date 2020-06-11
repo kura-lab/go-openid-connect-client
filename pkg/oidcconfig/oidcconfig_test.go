@@ -17,11 +17,11 @@ func TestNewSuccess(t *testing.T) {
 		Reply(200).
 		JSON(map[string]interface{}{
 			"issuer":                 "https://op.example.com",
+			"registration_endpoint":  "https://op.example.com/registration",
 			"authorization_endpoint": "https://op.example.com/authorization",
 			"token_endpoint":         "https://op.example.com/token",
 			"userinfo_endpoint":      "https://op.example.com/userinfo",
 			"jwks_uri":               "https://op.example.com/jwks",
-			"registration_endpoint":  "https://op.example.com/registration",
 			"token_endpoint_auth_methods_supported": []string{
 				"client_secret_basic",
 				"client_secret_post",
@@ -72,6 +72,10 @@ func TestNewSuccess(t *testing.T) {
 		t.Errorf("invalid issuer. expected: https://op.example.com, actual: %v", response.Issuer)
 	}
 
+	if response.RegistrationEndpoint != "https://op.example.com/registration" {
+		t.Errorf("invalid registration_endpoint. expected: https://op.example.com/registration, actual: %v", response.RegistrationEndpoint)
+	}
+
 	if response.AuthorizationEndpoint != "https://op.example.com/authorization" {
 		t.Errorf("invalid authorization_endpoint. expected: https://op.example.com/authorization, actual: %v", response.AuthorizationEndpoint)
 	}
@@ -81,15 +85,13 @@ func TestNewSuccess(t *testing.T) {
 	}
 
 	if response.UserInfoEndpoint != "https://op.example.com/userinfo" {
-		t.Errorf("invalid userinfo. expected: https://op.example.com/userinfo, actual: %v", response.UserInfoEndpoint)
+		t.Errorf("invalid userinfo_endpoint. expected: https://op.example.com/userinfo, actual: %v", response.UserInfoEndpoint)
+	}
+
 	}
 
 	if response.JWKsURI != "https://op.example.com/jwks" {
 		t.Errorf("invalid jwks_uri. expected: https://op.example.com/jwks, actual: %v", response.JWKsURI)
-	}
-
-	if response.RegistrationEndpoint != "https://op.example.com/registration" {
-		t.Errorf("invalid registration_endpoint. expected: https://op.example.com/registration, actual: %v", response.RegistrationEndpoint)
 	}
 
 	for key, value := range []string{"client_secret_basic", "client_secret_post"} {
@@ -133,11 +135,12 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 
 	config := NewOIDCConfig(
 		Issuer("https://op.example.com"),
+		RegistrationEndpoint("https://op.example.com/registration"),
 		AuthorizationEndpoint("https://op.example.com/authorization"),
 		TokenEndpoint("https://op.example.com/token"),
 		UserInfoEndpoint("https://op.example.com/userinfo"),
+		RevocationEndpoint("https://op.example.com/revocation"),
 		JWKsURI("https://op.example.com/jwks"),
-		RegistrationEndpoint("https://op.example.com/registration"),
 		TokenEndpointAuthMethodsSupported([]string{"client_secret_basic", "client_secret_post"}),
 		ResponseTypesSupported([]string{"code", "code token", "code token id_token"}),
 		ResponseModesSupported([]string{"form_post", "query", "fragment"}),
@@ -148,6 +151,10 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 
 	if response.Issuer != "https://op.example.com" {
 		t.Errorf("invalid issuer. expected: https://op.example.com, actual: %#v", response.Issuer)
+	}
+
+	if response.RegistrationEndpoint != "https://op.example.com/registration" {
+		t.Errorf("invalid registration_endpoint. expected: https://op.example.com/registration, actual: %#v", response.RegistrationEndpoint)
 	}
 
 	if response.AuthorizationEndpoint != "https://op.example.com/authorization" {
@@ -162,12 +169,10 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 		t.Errorf("invalid userinfo_endpoint. expected: https://op.example.com/userinfo, actual: %#v", response.UserInfoEndpoint)
 	}
 
-	if response.JWKsURI != "https://op.example.com/jwks" {
-		t.Errorf("invalid jwks_uri. expected: https://op.example.com/jwks, actual: %#v", response.JWKsURI)
 	}
 
-	if response.RegistrationEndpoint != "https://op.example.com/registration" {
-		t.Errorf("invalid registration_endpoint. expected: https://op.example.com/registration, actual: %#v", response.RegistrationEndpoint)
+	if response.JWKsURI != "https://op.example.com/jwks" {
+		t.Errorf("invalid jwks_uri. expected: https://op.example.com/jwks, actual: %#v", response.JWKsURI)
 	}
 
 	for key, value := range []string{"client_secret_basic", "client_secret_post"} {
