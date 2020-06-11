@@ -21,6 +21,7 @@ func TestNewSuccess(t *testing.T) {
 			"authorization_endpoint": "https://op.example.com/authorization",
 			"token_endpoint":         "https://op.example.com/token",
 			"userinfo_endpoint":      "https://op.example.com/userinfo",
+			"revocation_endpoint":    "https://op.example.com/revocation",
 			"jwks_uri":               "https://op.example.com/jwks",
 			"token_endpoint_auth_methods_supported": []string{
 				"client_secret_basic",
@@ -88,6 +89,8 @@ func TestNewSuccess(t *testing.T) {
 		t.Errorf("invalid userinfo_endpoint. expected: https://op.example.com/userinfo, actual: %v", response.UserInfoEndpoint)
 	}
 
+	if response.RevocationEndpoint != "https://op.example.com/revocation" {
+		t.Errorf("invalid revocation_endpoint. expected: https://op.example.com/revocation, actual: %v", response.RevocationEndpoint)
 	}
 
 	if response.JWKsURI != "https://op.example.com/jwks" {
@@ -169,6 +172,8 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 		t.Errorf("invalid userinfo_endpoint. expected: https://op.example.com/userinfo, actual: %#v", response.UserInfoEndpoint)
 	}
 
+	if response.RevocationEndpoint != "https://op.example.com/revocation" {
+		t.Errorf("invalid revocation_endpoint. expected: https://op.example.com/revocation, actual: %#v", response.RevocationEndpoint)
 	}
 
 	if response.JWKsURI != "https://op.example.com/jwks" {
