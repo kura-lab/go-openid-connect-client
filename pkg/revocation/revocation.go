@@ -5,6 +5,8 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 )
@@ -23,15 +25,19 @@ type Revocation struct {
 	oIDCConfig oidcconfig.Response
 	response   Response
 	// required. Access Token or Refresh Token.
-	token string
+	clientID     string
+	clientSecret string
+	token        string
 	// optional
 	tokenTypeHint string
 }
 
 // NewRevocation is Revocation constructor function.
-func NewRevocation(oIDCConfig oidcconfig.Response, token string, options ...Option) *Revocation {
+func NewRevocation(oIDCConfig oidcconfig.Response, clientID string, clientSecret string, token string, options ...Option) *Revocation {
 	revocation := new(Revocation)
 	revocation.oIDCConfig = oIDCConfig
+	revocation.clientID = clientID
+	revocation.clientSecret = clientSecret
 	revocation.token = token
 
 	for _, option := range options {
@@ -54,10 +60,17 @@ func TokenTypeHint(tokenTypeHint string) Option {
 // Request is method to request OAuth 2.0 Token Revocation Endpoint.
 func (revocation *Revocation) Request() (nerr error) {
 
+	values := url.Values{}
+	values.Set("token", revocation.token)
+
+	if revocation.tokenTypeHint != "" {
+		values.Add("token_type_hint", revocation.tokenTypeHint)
+	}
+
 	revocationRequest, err := http.NewRequest(
 		"POST",
 		revocation.oIDCConfig.RevocationEndpoint,
-		nil,
+		strings.NewReader(values.Encode()),
 	)
 	if err != nil {
 		nerr = err
@@ -65,7 +78,8 @@ func (revocation *Revocation) Request() (nerr error) {
 	}
 
 	revocationRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	revocationRequest.Header.Set("Authorization", "Bearer "+revocation.token)
+	revocationRequest.SetBasicAuth(revocation.clientID, revocation.clientSecret)
+
 	response, err := http.DefaultClient.Do(revocationRequest)
 	defer func() {
 		if _, err := io.Copy(ioutil.Discard, response.Body); err != nil {
