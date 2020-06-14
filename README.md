@@ -25,3 +25,4 @@ First, let's start the application. Then, check the flow of processing with the 
 * [The OAuth 2.0 Authorization Framework](https://tools.ietf.org/html/rfc6749)
 * [The OAuth 2.0 Authorization Framework: Bearer Token Usage](https://tools.ietf.org/html/rfc6750)
 * [OAuth 2.0 Authorization Server Metadata](https://tools.ietf.org/html/rfc8414)
+* [OAuth 2.0 Token Revocation](https://tools.ietf.org/html/rfc7009)
