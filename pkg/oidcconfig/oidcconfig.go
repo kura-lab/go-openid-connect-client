@@ -17,6 +17,7 @@ type Response struct {
 	TokenEndpoint                     string   `json:"token_endpoint"`
 	UserInfoEndpoint                  string   `json:"userinfo_endpoint"`
 	RevocationEndpoint                string   `json:"revocation_endpoint"`
+	IntrospectionEndpoint             string   `json:"introspection_endpoint"`
 	JWKsURI                           string   `json:"jwks_uri"`
 	TokenEndpointAuthMethodsSupported []string `json:"token_endpoint_auth_methods_supported"`
 	ResponseTypesSupported            []string `json:"response_types_supported"`
@@ -37,6 +38,7 @@ type OIDCConfig struct {
 	jWKsURI                           string
 	registrationEndpoint              string
 	revocationEndpoint                string
+	introspectionEndpoint             string
 	tokenEndpointAuthMethodsSupported []string
 	responseTypesSupported            []string
 	responseModesSupported            []string
@@ -107,6 +109,14 @@ func UserInfoEndpoint(userInfoEndpoint string) Option {
 func RevocationEndpoint(revocationEndpoint string) Option {
 	return func(config *OIDCConfig) error {
 		config.revocationEndpoint = revocationEndpoint
+		return nil
+	}
+}
+
+// IntrospectionEndpoint is functional option to add OAuth 2.0 Token Introspection Endpoint.
+func IntrospectionEndpoint(introspectionEndpoint string) Option {
+	return func(config *OIDCConfig) error {
+		config.introspectionEndpoint = introspectionEndpoint
 		return nil
 	}
 }
@@ -221,6 +231,9 @@ func (config *OIDCConfig) Response() Response {
 	}
 	if config.revocationEndpoint != "" {
 		config.response.RevocationEndpoint = config.revocationEndpoint
+	}
+	if config.introspectionEndpoint != "" {
+		config.response.IntrospectionEndpoint = config.introspectionEndpoint
 	}
 	if config.jWKsURI != "" {
 		config.response.JWKsURI = config.jWKsURI

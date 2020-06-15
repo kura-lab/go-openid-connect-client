@@ -22,6 +22,7 @@ func TestNewSuccess(t *testing.T) {
 			"token_endpoint":         "https://op.example.com/token",
 			"userinfo_endpoint":      "https://op.example.com/userinfo",
 			"revocation_endpoint":    "https://op.example.com/revocation",
+			"introspection_endpoint": "https://op.example.com/tokeninfo",
 			"jwks_uri":               "https://op.example.com/jwks",
 			"token_endpoint_auth_methods_supported": []string{
 				"client_secret_basic",
@@ -93,6 +94,10 @@ func TestNewSuccess(t *testing.T) {
 		t.Errorf("invalid revocation_endpoint. expected: https://op.example.com/revocation, actual: %v", response.RevocationEndpoint)
 	}
 
+	if response.IntrospectionEndpoint != "https://op.example.com/tokeninfo" {
+		t.Errorf("invalid introspection_endpoint. expected: https://op.example.com/tokeninfo, actual: %v", response.IntrospectionEndpoint)
+	}
+
 	if response.JWKsURI != "https://op.example.com/jwks" {
 		t.Errorf("invalid jwks_uri. expected: https://op.example.com/jwks, actual: %v", response.JWKsURI)
 	}
@@ -143,6 +148,7 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 		TokenEndpoint("https://op.example.com/token"),
 		UserInfoEndpoint("https://op.example.com/userinfo"),
 		RevocationEndpoint("https://op.example.com/revocation"),
+		IntrospectionEndpoint("https://op.example.com/tokeninfo"),
 		JWKsURI("https://op.example.com/jwks"),
 		TokenEndpointAuthMethodsSupported([]string{"client_secret_basic", "client_secret_post"}),
 		ResponseTypesSupported([]string{"code", "code token", "code token id_token"}),
@@ -174,6 +180,10 @@ func TestNewOIDCConfigSuccess(t *testing.T) {
 
 	if response.RevocationEndpoint != "https://op.example.com/revocation" {
 		t.Errorf("invalid revocation_endpoint. expected: https://op.example.com/revocation, actual: %#v", response.RevocationEndpoint)
+	}
+
+	if response.IntrospectionEndpoint != "https://op.example.com/tokeninfo" {
+		t.Errorf("invalid introspection_endpoint. expected: https://op.example.com/tokeninfo, actual: %#v", response.IntrospectionEndpoint)
 	}
 
 	if response.JWKsURI != "https://op.example.com/jwks" {
