@@ -110,10 +110,12 @@ func NewIDToken(oIDCConfig oidcconfig.Response, rawIDToken string) (*IDToken, er
 
 // VerifyIDTokenHeader is method to verify ID Token Header.
 func (iDToken *IDToken) VerifyIDTokenHeader() error {
-	if iDToken.iDTokenHeader.Type != "JWT" {
+
+	if iDToken.iDTokenHeader.Type != "" && iDToken.iDTokenHeader.Type != "JWT" {
 		return errors.New("unsupported header type. id token type supported by OpenID Connect is JWT, " +
 			"actual type in id token's header is " + iDToken.iDTokenHeader.Type)
 	}
+
 	if !mystring.Contains(
 		iDToken.iDTokenHeader.Algorithm,
 		iDToken.oIDCConfig.IDTokenSigningAlgValuesSupported,
