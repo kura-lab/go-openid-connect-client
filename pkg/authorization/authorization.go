@@ -150,10 +150,11 @@ func (authorization *Authorization) GenerateURL() (string, error) {
 	}
 	q.Set("response_type", strings.Join(authorization.responseType, " "))
 
-	if len(authorization.oIDCConfig.ResponseModesSupported) > 0 && !mystrings.Contains(
-		authorization.responseMode,
-		authorization.oIDCConfig.ResponseModesSupported,
-	) {
+	if len(authorization.oIDCConfig.ResponseModesSupported) > 0 && authorization.responseMode != "" &&
+		!mystrings.Contains(
+			authorization.responseMode,
+			authorization.oIDCConfig.ResponseModesSupported,
+		) {
 		return "", errors.New("unsupported response mode. added response mode is " + authorization.responseMode +
 			". supported response modes are " + fmt.Sprintf("%v", authorization.oIDCConfig.ResponseModesSupported))
 	}
