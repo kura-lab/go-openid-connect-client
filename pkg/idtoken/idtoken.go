@@ -163,7 +163,7 @@ func (iDToken *IDToken) generateRSAPublicKey(jWKsResponse jwks.Response) (rsa.Pu
 				return rsa.PublicKey{}, errors.New("invalid use. actual use in JWK set is " + keySet.Use + ". the use should be sig")
 			} else if keySet.KeyType != "RSA" {
 				return rsa.PublicKey{}, errors.New("invalid key type. actual key type in JWK set is " + keySet.KeyType + ". it's not match type in header")
-			} else if keySet.Algorithm != iDToken.iDTokenHeader.Algorithm {
+			} else if keySet.Algorithm != "" && keySet.Algorithm != iDToken.iDTokenHeader.Algorithm {
 				return rsa.PublicKey{}, errors.New("invalid algorithm. actual algorithm in JWK set is " + keySet.Algorithm + ". it's not match algorithm in header")
 			}
 
