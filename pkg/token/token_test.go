@@ -6,7 +6,6 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 	"github.com/kura-lab/go-openid-connect-client/pkg/state"
 	"github.com/kura-lab/go-openid-connect-client/pkg/token/granttype"
-	"github.com/kura-lab/go-openid-connect-client/pkg/token/tokenendpointauthmethod"
 	"gopkg.in/h2non/gock.v1"
 )
 
@@ -119,7 +118,6 @@ func TestNewTokenAuthorizationCodeClientSecretBasicSuccess(t *testing.T) {
 		AuthorizationCode("AUTHORIZATION_CODE"),
 		RedirectURI("REDIRECT_URI"),
 		CodeVerifier("CODE_VERIFIER"),
-		TokenEndpointAuthMethod(tokenendpointauthmethod.ClientSecretBasic),
 	)
 
 	err := tokenPointer.Request()
@@ -173,7 +171,7 @@ func TestNewTokenAuthorizationCodeClientSecretPostSuccess(t *testing.T) {
 		AuthorizationCode("AUTHORIZATION_CODE"),
 		RedirectURI("REDIRECT_URI"),
 		CodeVerifier("CODE_VERIFIER"),
-		TokenEndpointAuthMethod(tokenendpointauthmethod.ClientSecretPost),
+		ClientSecretPost(),
 	)
 
 	err := tokenPointer.Request()
