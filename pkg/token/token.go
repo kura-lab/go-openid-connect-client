@@ -14,7 +14,6 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/state"
 	mystrings "github.com/kura-lab/go-openid-connect-client/pkg/strings"
 	"github.com/kura-lab/go-openid-connect-client/pkg/token/granttype"
-	"github.com/kura-lab/go-openid-connect-client/pkg/token/tokenendpointauthmethod"
 )
 
 // Response is struct for Token Response.
@@ -58,7 +57,7 @@ func NewToken(oIDCConfig oidcconfig.Response, clientID string, clientSecret stri
 	token.clientSecret = clientSecret
 	token.grantType = "authorization_code"
 
-	token.tokenEndpointAuthMethod = tokenendpointauthmethod.ClientSecretBasic
+	token.tokenEndpointAuthMethod = "client_secret_basic"
 
 	for _, option := range options {
 		option(token)
@@ -126,10 +125,11 @@ func RefreshToken(refreshToken string) Option {
 	}
 }
 
-// TokenEndpointAuthMethod is functional option to specify "token_endpoint_auth_method".
-func TokenEndpointAuthMethod(tokenEndpointAuthMethod string) Option {
+// ClientSecretPost is functional option to specify client_id and client_secret with post body. token_endpoint_auth_method is "client_secret_post".
+// default method is "client_secret_basic"(Basic Authentication) if not specify this option.
+func ClientSecretPost() Option {
 	return func(token *Token) error {
-		token.tokenEndpointAuthMethod = tokenEndpointAuthMethod
+		token.tokenEndpointAuthMethod = "client_secret_post"
 		return nil
 	}
 }
@@ -168,7 +168,7 @@ func (token *Token) Request() (nerr error) {
 		}
 	}
 
-	if token.tokenEndpointAuthMethod == tokenendpointauthmethod.ClientSecretPost {
+	if token.tokenEndpointAuthMethod == "client_secret_post" {
 		values.Add("client_id", token.clientID)
 		values.Add("client_secret", token.clientSecret)
 	}
@@ -184,7 +184,7 @@ func (token *Token) Request() (nerr error) {
 	}
 	tokenRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	if token.tokenEndpointAuthMethod == tokenendpointauthmethod.ClientSecretBasic {
+	if token.tokenEndpointAuthMethod == "client_secret_basic" {
 		tokenRequest.SetBasicAuth(token.clientID, token.clientSecret)
 	}
 
