@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<title>Complete Client Registration - Sample App</title>
+<title>Client Registration - Sample App</title>
 <meta name="description" content="">
 <meta name="author" content="">
 <link rel="stylesheet" href="">
@@ -11,9 +11,28 @@
 <body>
 <script>
 </script>
-Complete Client Registration<br/>
-Client Name: {{ .ClientName }}<br/>
-Client ID: {{ .ClientID }}<br/>
+Client Registration<br/>
+<form action="/registration" method="post">
+<p>
+OpenID Configuration URI:<br/>
+<input type="text" name="oidc_config_uri" value="" size="150" /><br/>
+</p>
+<p>
+Response Type:<br/>
+<input type="radio" name="response_type" value="code" checked="checked">code<br/>
+<input type="radio" name="response_type" value="code id_token">codei id_token<br/>
+<input type="radio" name="response_type" value="code id_token+token">code id_token token<br/>
+<input type="radio" name="response_type" value="code token">code token<br/>
+<input type="radio" name="response_type" value="id_token">id_token<br/>
+<input type="radio" name="response_type" value="id_token token">id_token token<br/>
+</p>
+<p>
+Response Mode:<br/>
+<input type="radio" name="response_mode" value="default" checked="checked">Default
+<input type="radio" name="response_mode" value="form_post">Form POST
+</p>
+<p><input type="submit" name="submit" value="Register" /></p>
+</form>
 <a href="/index">Back</a>
 </body>
 </html>
