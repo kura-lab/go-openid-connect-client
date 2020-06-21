@@ -34,10 +34,14 @@ func TestNewRegistrationSuccess(t *testing.T) {
 			"token_endpoint_auth_method": "client_secret_basic",
 			"jwks_uri":                   "https://rp.example.com/jwks",
 			"initiate_login_uri":         "https://rp.example.com/login",
+			"contacts": []string{
+				"janedoe@rp.example.com",
+			},
 		}).
 		Reply(201).
 		JSON(map[string]interface{}{
 			"client_id":                  "CLIENT_ID",
+			"client_secret":              "CLIENT_SECRET",
 			"client_secret_expires_at":   0,
 			"registration_access_token":  "REGISTRATION_ACCESS_TOKEN",
 			"registration_client_uri":    "https://op.example.com/registration?client_id=CLIENT_ID",
@@ -51,6 +55,9 @@ func TestNewRegistrationSuccess(t *testing.T) {
 			"logo_uri":     "https://rp.example.com/logo.png",
 			"subject_type": "pairwise",
 			"jwks_uri":     "https://rp.example.com/my_public_keys.jwks",
+			"contacts": []string{
+				"janedoe@rp.example.com",
+			},
 		})
 
 	oIDCConfigPointer := oidcconfig.NewOIDCConfig(
@@ -79,6 +86,7 @@ func TestNewRegistrationSuccess(t *testing.T) {
 		TokenEndpointAuthMethod("client_secret_basic"),
 		JWKsURI("https://rp.example.com/jwks"),
 		InitiateLoginURI("https://rp.example.com/login"),
+		Contacts([]string{"janedoe@rp.example.com"}),
 	)
 
 	err := registrationPointer.Request()
@@ -152,6 +160,12 @@ func TestNewRegistrationSuccess(t *testing.T) {
 
 	if response.JWKsURI != "https://rp.example.com/my_public_keys.jwks" {
 		t.Errorf("invalid jwks_uri. expected: , actual: %v", response.JWKsURI)
+	}
+
+	for key, expected := range []string{"janedoe@rp.example.com"} {
+		if response.Contacts[key] != expected {
+			t.Errorf("invalid contacts. expected: %v, actual: %v", expected, response.Contacts[key])
+		}
 	}
 
 	if response.Error != "" {

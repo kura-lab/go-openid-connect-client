@@ -31,6 +31,7 @@ type Response struct {
 	LogoURI                 string   `json:"logo_uri"`
 	SubjectType             string   `json:"subject_type"`
 	JWKsURI                 string   `json:"jwks_uri"`
+	Contacts                []string `json:"contacts"`
 	Error                   string   `json:"error"`
 	ErrorDescription        string   `json:"error_description"`
 }
@@ -127,6 +128,14 @@ func JWKsURI(jWKsURI string) Option {
 func InitiateLoginURI(initiateLoginURI string) Option {
 	return func(registration *Registration) error {
 		registration.request["initiate_login_uri"] = initiateLoginURI
+		return nil
+	}
+}
+
+// Contacts is functional option to add "contacts" parameter.
+func Contacts(contacts []string) Option {
+	return func(registration *Registration) error {
+		registration.request["contacts"] = contacts
 		return nil
 	}
 }
