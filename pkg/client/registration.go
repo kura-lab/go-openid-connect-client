@@ -24,7 +24,7 @@ type Response struct {
 	RegistrationAccessToken string   `json:"registration_access_token"`
 	RegistrationClientURI   string   `json:"registration_client_uri"`
 	ClientIDIssuedAt        int      `json:"client_id_issued_at"`
-	TokenEndpointAuthMethod []string `json:"token_endpoint_auth_method"`
+	TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
 	ApplicationType         string   `json:"application_type"`
 	RedirectURIs            []string `json:"redirect_uris"`
 	ClientName              string   `json:"client_name"`

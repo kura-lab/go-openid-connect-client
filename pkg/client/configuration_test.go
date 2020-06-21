@@ -17,13 +17,11 @@ func TestNewConfigurationSuccess(t *testing.T) {
 		MatchParam("client_id", "CLIENT_ID").
 		Reply(201).
 		JSON(map[string]interface{}{
-			"client_id":                "CLIENT_ID",
-			"client_secret":            "CLIENT_SECRET",
-			"client_secret_expires_at": 0,
-			"token_endpoint_auth_method": []string{
-				"client_secret_basic",
-			},
-			"application_type": "web",
+			"client_id":                  "CLIENT_ID",
+			"client_secret":              "CLIENT_SECRET",
+			"client_secret_expires_at":   0,
+			"token_endpoint_auth_method": "client_secret_basic",
+			"application_type":           "web",
 			"redirect_uris": []string{
 				"https://rp.example.com/callback",
 				"https://rp.example.com/callback2",
@@ -78,10 +76,8 @@ func TestNewConfigurationSuccess(t *testing.T) {
 		t.Errorf("invalid client_id_issued_at. expected: 0, actual: %v", response.ClientIDIssuedAt)
 	}
 
-	for key, expected := range []string{"client_secret_basic"} {
-		if response.TokenEndpointAuthMethod[key] != expected {
-			t.Errorf("invalid token_endpoint_auth_method. expected: %v, actual: %v", expected, response.TokenEndpointAuthMethod[key])
-		}
+	if response.TokenEndpointAuthMethod != "client_secret_basic" {
+		t.Errorf("invalid token_endpoint_auth_method. expected: client_secret_basic, actual: %v", response.TokenEndpointAuthMethod)
 	}
 
 	if response.ApplicationType != "web" {
