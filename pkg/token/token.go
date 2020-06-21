@@ -1,6 +1,7 @@
 package token
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,6 +21,7 @@ import (
 type Response struct {
 	Status           string
 	StatusCode       int
+	Body             string
 	AccessToken      string `json:"access_token"`
 	TokenType        string `json:"token_type"`
 	RefreshToken     string `json:"refresh_token"`
@@ -205,15 +207,29 @@ func (token *Token) Request() (nerr error) {
 		return
 	}
 
+	buf := bytes.NewBuffer(nil)
+	body := bytes.NewBuffer(nil)
+
+	w := io.MultiWriter(buf, body)
+	io.Copy(w, response.Body)
+
 	var tokenResponse Response
-	err = json.NewDecoder(response.Body).Decode(&tokenResponse)
+	token.response = tokenResponse
+	token.response.Status = response.Status
+	token.response.StatusCode = response.StatusCode
+
+	rawBody, err := ioutil.ReadAll(buf)
 	if err != nil {
 		nerr = err
 		return
 	}
-	tokenResponse.Status = response.Status
-	tokenResponse.StatusCode = response.StatusCode
-	token.response = tokenResponse
+	token.response.Body = string(rawBody)
+
+	err = json.NewDecoder(body).Decode(&token.response)
+	if err != nil {
+		nerr = err
+		return
+	}
 
 	return
 }

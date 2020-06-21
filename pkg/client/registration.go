@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -15,6 +16,7 @@ import (
 type Response struct {
 	Status                  string
 	StatusCode              int
+	Body                    string
 	WWWAuthenticate         header.WWWAuthenticate
 	ClientID                string   `json:"client_id"`
 	ClientSecret            string   `json:"client_secret"`
@@ -132,7 +134,7 @@ func InitiateLoginURI(initiateLoginURI string) Option {
 // Request is method to request Registration Endpoint.
 func (registration *Registration) Request() (nerr error) {
 
-	body, err := json.Marshal(registration.request)
+	requestBody, err := json.Marshal(registration.request)
 	if err != nil {
 		nerr = err
 		return
@@ -141,7 +143,7 @@ func (registration *Registration) Request() (nerr error) {
 	registrationRequest, err := http.NewRequest(
 		"POST",
 		registration.oIDCConfig.RegistrationEndpoint,
-		strings.NewReader(string(body)),
+		strings.NewReader(string(requestBody)),
 	)
 	if err != nil {
 		nerr = err
@@ -166,15 +168,29 @@ func (registration *Registration) Request() (nerr error) {
 		return
 	}
 
+	buf := bytes.NewBuffer(nil)
+	responseBody := bytes.NewBuffer(nil)
+
+	w := io.MultiWriter(buf, responseBody)
+	io.Copy(w, response.Body)
+
 	var registrationResponse Response
-	err = json.NewDecoder(response.Body).Decode(&registrationResponse)
+	registration.response = registrationResponse
+	registration.response.Status = response.Status
+	registration.response.StatusCode = response.StatusCode
+
+	rawBody, err := ioutil.ReadAll(buf)
 	if err != nil {
 		nerr = err
 		return
 	}
-	registrationResponse.Status = response.Status
-	registrationResponse.StatusCode = response.StatusCode
-	registration.response = registrationResponse
+	registration.response.Body = string(rawBody)
+
+	err = json.NewDecoder(responseBody).Decode(&registration.response)
+	if err != nil {
+		nerr = err
+		return
+	}
 
 	return
 }

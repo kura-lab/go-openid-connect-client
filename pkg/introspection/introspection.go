@@ -1,6 +1,7 @@
 package introspection
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
@@ -17,6 +18,7 @@ import (
 type Response struct {
 	Status     string
 	StatusCode int
+	Body       string
 	// requierd
 	Active bool `json:"active"`
 	// optional
@@ -137,27 +139,40 @@ func (introspection *Introspection) Request() (nerr error) {
 		return
 	}
 
+	buf := bytes.NewBuffer(nil)
+	body := bytes.NewBuffer(nil)
+
+	w := io.MultiWriter(buf, body)
+	io.Copy(w, response.Body)
+
 	var introspectionResponse Response
-	err = json.NewDecoder(response.Body).Decode(&introspectionResponse)
+	introspection.response = introspectionResponse
+	introspection.response.Status = response.Status
+	introspection.response.StatusCode = response.StatusCode
+
+	rawBody, err := ioutil.ReadAll(buf)
 	if err != nil {
 		nerr = err
 		return
 	}
-	introspectionResponse.Status = response.Status
-	introspectionResponse.StatusCode = response.StatusCode
+	introspection.response.Body = string(rawBody)
 
-	if introspectionResponse.RawAudience != nil {
-		if err := json.Unmarshal(introspectionResponse.RawAudience, &introspectionResponse.Audience); err != nil {
+	err = json.NewDecoder(body).Decode(&introspection.response)
+	if err != nil {
+		nerr = err
+		return
+	}
+
+	if introspection.response.RawAudience != nil {
+		if err := json.Unmarshal(introspection.response.RawAudience, &introspection.response.Audience); err != nil {
 			var audString string
-			if err := json.Unmarshal(introspectionResponse.RawAudience, &audString); err != nil {
+			if err := json.Unmarshal(introspection.response.RawAudience, &audString); err != nil {
 				nerr = errors.New("unexpected type of aud claim. it assumes array type of string or string type")
 				return
 			}
-			introspectionResponse.Audience = append(introspectionResponse.Audience, audString)
+			introspection.response.Audience = append(introspection.response.Audience, audString)
 		}
 	}
-
-	introspection.response = introspectionResponse
 
 	if response.Header.Get("WWW-Authenticate") != "" {
 		parsed := header.ParseWWWAuthenticateHeader(response.Header.Get("WWW-Authenticate"))

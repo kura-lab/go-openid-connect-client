@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -80,15 +81,29 @@ func (configuration *Configuration) Request() (nerr error) {
 		return
 	}
 
+	buf := bytes.NewBuffer(nil)
+	body := bytes.NewBuffer(nil)
+
+	w := io.MultiWriter(buf, body)
+	io.Copy(w, response.Body)
+
 	var configurationResponse Response
-	err = json.NewDecoder(response.Body).Decode(&configurationResponse)
+	configuration.response = configurationResponse
+	configuration.response.Status = response.Status
+	configuration.response.StatusCode = response.StatusCode
+
+	rawBody, err := ioutil.ReadAll(buf)
 	if err != nil {
 		nerr = err
 		return
 	}
-	configurationResponse.Status = response.Status
-	configurationResponse.StatusCode = response.StatusCode
-	configuration.response = configurationResponse
+	configuration.response.Body = string(rawBody)
+
+	err = json.NewDecoder(body).Decode(&configuration.response)
+	if err != nil {
+		nerr = err
+		return
+	}
 
 	if response.Header.Get("WWW-Authenticate") != "" {
 		parsed := header.ParseWWWAuthenticateHeader(response.Header.Get("WWW-Authenticate"))
