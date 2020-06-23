@@ -35,3 +35,17 @@ func getClientSecret() string {
 	log.Println("failed to load client secret")
 	return ""
 }
+func setFormPost() {
+	cached.Set("FormPost", true, cache.DefaultExpiration)
+}
+
+func isFormPost() bool {
+
+	if formPost, found := cached.Get("FormPost"); found {
+		log.Info("load form post from cache")
+		return formPost.(bool)
+	}
+
+	log.Info("failed to load form post status")
+	return false
+}
