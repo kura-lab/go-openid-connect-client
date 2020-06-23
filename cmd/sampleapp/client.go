@@ -49,3 +49,18 @@ func isFormPost() bool {
 	log.Info("failed to load form post status")
 	return false
 }
+
+func setResponseType(responseType string) {
+	cached.Set("ResponseType", responseType, cache.DefaultExpiration)
+}
+
+func getResponseType() string {
+
+	if responseType, found := cached.Get("ResponseType"); found {
+		log.Info("load response type from cache")
+		return responseType.(string)
+	}
+
+	log.Warn("failed to load response type")
+	return ""
+}
