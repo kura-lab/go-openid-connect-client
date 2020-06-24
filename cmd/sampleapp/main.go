@@ -1,26 +1,40 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net/http"
+	"os"
+	"path"
+	"runtime"
+	"strings"
 	"time"
 
 	"github.com/kura-lab/go-openid-connect-client/configs"
-	"github.com/kura-lab/go-openid-connect-client/internal/apps/sampleapp/pkg/credential"
 	"github.com/kura-lab/go-openid-connect-client/internal/apps/sampleapp/pkg/rand"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/display"
-	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/responsetype"
+	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/responsemode"
 	"github.com/kura-lab/go-openid-connect-client/pkg/authorization/scope"
 	mycallback "github.com/kura-lab/go-openid-connect-client/pkg/callback"
+	"github.com/kura-lab/go-openid-connect-client/pkg/client"
 	"github.com/kura-lab/go-openid-connect-client/pkg/idtoken"
 	"github.com/kura-lab/go-openid-connect-client/pkg/token"
 	"github.com/kura-lab/go-openid-connect-client/pkg/token/granttype"
 	"github.com/kura-lab/go-openid-connect-client/pkg/userinfo"
+	log "github.com/sirupsen/logrus"
 )
 
 func init() {
-	log.SetFlags(log.Lshortfile)
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.InfoLevel)
+	log.SetReportCaller(true)
+	log.SetFormatter(&log.TextFormatter{
+		FullTimestamp: true,
+		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+			filename := path.Base(f.File)
+			return "", fmt.Sprintf("%s:%d", filename, f.Line)
+		},
+	})
 }
 
 func main() {
@@ -52,7 +66,11 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func authentication(w http.ResponseWriter, r *http.Request) {
-	log.Println("-- authentication started --")
+
+	log.WithFields(log.Fields{
+		"method": r.Method,
+		"url":    r.URL,
+	}).Info("-- authentication started --")
 
 	// generate state and nonce and store in cookie
 	state := rand.GenerateRandomString(32)
@@ -69,16 +87,16 @@ func authentication(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	}
 	http.SetCookie(w, nonceCookie)
-	log.Println("stored state and nonce in session")
+	log.Info("stored state and nonce in session")
 
 	// get openid configuration
 	oIDCConfigResponse, err := getOIDCConfigResponse()
 	if err != nil {
-		log.Println("failed to get openid configuration response")
+		log.Fatal("failed to get openid configuration response")
 		renderUnexpectedError(w)
 		return
 	}
-	log.Println("success to get openid configuration")
+	log.Info("success to get openid configuration")
 
 	// generate URL to request to authorization endpoint
 	authorizationPotinter := authorization.NewAuthorization(
@@ -94,36 +112,39 @@ func authentication(w http.ResponseWriter, r *http.Request) {
 
 	url, err := authorizationPotinter.GenerateURL()
 	if err != nil {
-		log.Println("failed to generate authorization URL")
+		log.Fatal("failed to generate authorization URL")
 		renderUnexpectedError(w)
 		return
 	}
-	log.Println("generated authorization endpoint url and redirect the url")
+	log.WithFields(log.Fields{
+		"authorization url": url,
+	}).Info("generated authorization endpoint url and redirect the url")
 
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
 	w.Header().Set("Location", url)
 	w.WriteHeader(http.StatusMovedPermanently)
 
-	log.Println("-- authentication completed --")
+	log.Info("-- authentication completed --")
 }
 
 func callback(w http.ResponseWriter, r *http.Request) {
-	log.Println("-- callback started --")
 
-	// parse callback query
-	callbackPointer := mycallback.NewCallback(mycallback.URI(r.URL))
+	log.WithFields(log.Fields{
+		"method": r.Method,
+		"url":    r.URL,
+	}).Info("-- callback started --")
 	if err := callbackPointer.Parse(); err != nil {
-		log.Println("failed to parse callback query")
+		log.Fatal("failed to parse callback query")
 		renderUnexpectedError(w)
 		return
 	}
-	log.Println("success to parse callback query")
+	log.Info("success to parse callback form post or query")
 
 	// verify state parameter
 	storedState, err := r.Cookie("state")
 	if err != nil {
-		log.Println("failed to extract state in cookie")
+		log.Fatal("failed to extract state in cookie")
 		renderUnexpectedError(w)
 		return
 	}
@@ -135,31 +156,33 @@ func callback(w http.ResponseWriter, r *http.Request) {
 
 	statePass, err := callbackPointer.VerifyState(storedState.Value)
 	if err != nil {
-		log.Println("state does not match stored one")
+		log.Fatal("state does not match stored one")
 		renderUnexpectedError(w)
 		return
 	}
-	log.Println("success to verify state parameter")
+	log.Info("success to verify state parameter")
 
 	// check whether error parameter exists in callback query
 	callbackResponse := callbackPointer.Response()
 	if callbackResponse.Error != "" {
-		log.Println("error: " + callbackResponse.Error)
-		log.Println("error_description: " + callbackResponse.ErrorDescription)
-		log.Println("error_uri: " + callbackResponse.ErrorURI)
+		log.WithFields(log.Fields{
+			"error":             callbackResponse.Error,
+			"error_description": callbackResponse.ErrorDescription,
+			"error_uri":         callbackResponse.ErrorURI,
+		}).Fatal("generated authorization endpoint url and redirect the url")
 		renderUnexpectedError(w)
 		return
 	}
-	log.Println("error didn't exist in callback query")
+	log.Info("error didn't exist in callback form post or query")
 
 	// get openid configuration
 	oIDCConfigResponse, err := getOIDCConfigResponse()
 	if err != nil {
-		log.Println("failed to get openid configuration response")
+		log.Fatal("failed to get openid configuration response")
 		renderUnexpectedError(w)
 		return
 	}
-	log.Println("success to get openid configuration")
+	log.Info("success to get openid configuration")
 
 	// request to token endpoint
 	tokenPointer := token.NewToken(
@@ -173,31 +196,40 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err := tokenPointer.Request(); err != nil {
-		log.Println("failed to request token endpoint")
+		log.WithFields(log.Fields{
+			"status": tokenPointer.Response().Status,
+			"body":   tokenPointer.Response().Body,
+		}).Fatal("failed to request token endpoint")
 		renderUnexpectedError(w)
 		return
 	}
 
 	tokenResponse := tokenPointer.Response()
-	log.Println("status: " + tokenResponse.Status)
+	log.WithFields(log.Fields{
+		"status": tokenResponse.Status,
+		"body":   tokenResponse.Body,
+	}).Info("token response")
 
 	if tokenResponse.StatusCode != http.StatusOK {
-		log.Println("error: ", tokenResponse.Error)
-		log.Println("error_description: ", tokenResponse.ErrorDescription)
+		log.WithFields(log.Fields{
+			"error":             tokenResponse.Error,
+			"error_description": tokenResponse.ErrorDescription,
+		}).Info("token response was error")
 		if tokenResponse.Error == "invalid_grant" {
 			renderUnauthorizedError(w)
 			return
 		}
-		log.Println("token response was error")
+		log.Fatal("token response was unexpected error")
 		renderUnexpectedError(w)
 		return
 	}
-	log.Println("access token: " + tokenResponse.AccessToken)
-	log.Println("token type: " + tokenResponse.TokenType)
-	log.Println("refresh token: " + tokenResponse.RefreshToken)
-	log.Println("expires in: ", tokenResponse.ExpiresIn)
-	log.Println("id token: " + tokenResponse.IDToken)
-	log.Println("requested to token endpoint")
+	log.WithFields(log.Fields{
+		"access_token":  tokenResponse.AccessToken,
+		"token_type":    tokenResponse.TokenType,
+		"refresh_token": tokenResponse.RefreshToken,
+		"expires_in":    tokenResponse.ExpiresIn,
+		"id_token":      tokenResponse.IDToken,
+	}).Info("requested to token endpoint")
 
 	// verify id token's header
 	iDTokenPointer, err := idtoken.NewIDToken(
@@ -205,43 +237,44 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		tokenResponse.IDToken,
 	)
 	if err != nil {
-		log.Println("failed to decode id token")
+		log.Fatal("failed to decode id token")
 		renderUnexpectedError(w)
 		return
 	}
 
 	if err := iDTokenPointer.VerifyIDTokenHeader(); err != nil {
-		log.Println("invalid claim in id token header")
+		log.Warn("invalid claim in id token header")
 		renderUnexpectedError(w)
 		return
 	}
 	iDTokenPointerHeader := iDTokenPointer.GetIDTokenHeader()
-	log.Println("typ: ", iDTokenPointerHeader.Type)
-	log.Println("kid: ", iDTokenPointerHeader.KeyID)
-	log.Println("alg: ", iDTokenPointerHeader.Algorithm)
-	log.Println("verified id token's header")
+	log.WithFields(log.Fields{
+		"typ": iDTokenPointerHeader.Type,
+		"kid": iDTokenPointerHeader.KeyID,
+		"alg": iDTokenPointerHeader.Algorithm,
+	}).Info("verified id token's header")
 
 	// get jwks response
 	jWKsResponse, err := getJWKsResponse(oIDCConfigResponse)
 	if err != nil {
-		log.Println("failed to get jwks response")
+		log.Fatal("failed to get jwks response")
 		renderUnexpectedError(w)
 		return
 	}
-	log.Println("success to get jwks response")
+	log.Info("success to get jwks response")
 
 	// verify id token's signature
 	if err := iDTokenPointer.VerifySignature(jWKsResponse); err != nil {
-		log.Println("invalid id token signature")
+		log.Fatal("invalid id token signature")
 		renderUnexpectedError(w)
 		return
 	}
-	log.Println("success to verify signature")
+	log.Info("success to verify signature")
 
 	// verify claims in id token's payload
 	storedNonce, err := r.Cookie("nonce")
 	if err != nil {
-		log.Println("failed to extract nonce in cookie")
+		log.Fatal("failed to extract nonce in cookie")
 		renderUnexpectedError(w)
 		return
 	}
@@ -250,7 +283,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		MaxAge: -1,
 	}
 	http.SetCookie(w, nonceCookie)
-	log.Println("stored nonce: ", storedNonce.Value)
+	log.Info("stored nonce: ", storedNonce.Value)
 
 	err = iDTokenPointer.VerifyPayloadClaims(
 		idtoken.Issuer(),
@@ -259,7 +292,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		idtoken.DurationIssuedAt(600),
 	)
 	if err != nil {
-		log.Println("invalid claim in id token payload")
+		log.Fatal("invalid claim in id token payload")
 		renderUnexpectedError(w)
 		return
 	}
@@ -267,12 +300,12 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	iDTokenPayload := iDTokenPointer.GetIDTokenPayload()
 
 	// verify following claims according to your requirements
-	//log.Println("Expiration: ", iDTokenPayload.Expiration)
-	//log.Println("AuthTime: ", iDTokenPayload.AuthTime)
-	//log.Println("AuthenticationMethodReference: ", iDTokenPayload.AuthenticationMethodReference)
-	//log.Println("AuthenticationContextReference: ", iDTokenPayload.AuthenticationContextReference)
+	//log.Info("Expiration: ", iDTokenPayload.Expiration)
+	//log.Info("AuthTime: ", iDTokenPayload.AuthTime)
+	//log.Info("AuthenticationMethodReference: ", iDTokenPayload.AuthenticationMethodReference)
+	//log.Info("AuthenticationContextReference: ", iDTokenPayload.AuthenticationContextReference)
 
-	log.Println("success to verify claims in id token payload")
+	log.Info("success to verify claims in id token payload")
 
 	// request to userinfo endpoint
 	userInfoPointer := userinfo.NewUserInfo(
@@ -281,67 +314,80 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err := userInfoPointer.Request(); err != nil {
-		log.Println("failed to request userinfo endpoint")
+		log.WithFields(log.Fields{
+			"status": userInfoPointer.Response().Status,
+			"body":   userInfoPointer.Response().Body,
+		}).Fatal("failed to request userinfo endpoint")
 		renderUnexpectedError(w)
 		return
 	}
-	log.Println("requested to userinfo endpoint")
-
 	userInfoResponse := userInfoPointer.Response()
-	log.Println("status: " + userInfoResponse.Status)
+	log.WithFields(log.Fields{
+		"status": userInfoResponse.Status,
+		"body":   userInfoResponse.Body,
+	}).Info("requested to userinfo endpoint")
 
 	if userInfoResponse.StatusCode != http.StatusOK {
-		log.Println("WWW-Authenticate Bearer")
-		log.Println("realm: ", userInfoResponse.WWWAuthenticate.Realm)
-		log.Println("scope: ", userInfoResponse.WWWAuthenticate.Scope)
-		log.Println("error: ", userInfoResponse.WWWAuthenticate.Error)
-		log.Println("error_description: ", userInfoResponse.WWWAuthenticate.ErrorDescription)
-		log.Println("userinfo response was error")
+		log.WithFields(log.Fields{
+			"realm":             userInfoResponse.WWWAuthenticate.Realm,
+			"scope":             userInfoResponse.WWWAuthenticate.Scope,
+			"error":             userInfoResponse.WWWAuthenticate.Error,
+			"error_description": userInfoResponse.WWWAuthenticate.ErrorDescription,
+		}).Fatal("userinfo response was error. WWW-Authenticate Bearer")
 		renderUnexpectedError(w)
 		return
 	}
-	log.Println("requested to userinfo endpoint")
 
 	// verify sub claim
 	if iDTokenPayload.Subject != userInfoResponse.Subject {
-		log.Println("id token sub: ", iDTokenPayload.Subject)
-		log.Println("userinfo sub: ", userInfoResponse.Subject)
-		log.Println("userinfo's sub not match id token's one")
+		log.WithFields(log.Fields{
+			"id token sub": iDTokenPayload.Subject,
+			"userinfo sub": userInfoResponse.Subject,
+		}).Fatal("userinfo's sub not match id token's one")
 		renderUnexpectedError(w)
 		return
 	}
-	log.Println("success to verify sub claim")
+	log.Info("success to verify sub claim")
 
 	// request to token endpoint as refresh
 	// note: you don't need to refresh when access token is valid
-	refreshPointer := token.NewToken(
-		oIDCConfigResponse,
-		credential.GetClientIDValue(),
-		credential.GetClientSecretValue(),
-		token.GrantType(granttype.RefreshToken),
-		token.RefreshToken(tokenResponse.RefreshToken),
-	)
+	//refreshPointer := token.NewToken(
+	//	oIDCConfigResponse,
+	//	getClientID(),
+	//	getClientSecret(),
+	//	token.GrantType(granttype.RefreshToken),
+	//	token.RefreshToken(tokenResponse.RefreshToken),
+	//)
 
-	if err := refreshPointer.Request(); err != nil {
-		log.Println("failed to request token endpoint as refresh")
-		renderUnexpectedError(w)
-		return
-	}
+	//if err := refreshPointer.Request(); err != nil {
+	//	log.WithFields(log.Fields{
+	//		"status": refreshPointer.Response().Status,
+	//		"body":   refreshPointer.Response().Body,
+	//	}).Fatal("failed to request token endpoint as refresh")
+	//	renderUnexpectedError(w)
+	//	return
+	//}
 
-	refreshResponse := refreshPointer.Response()
-	if refreshResponse.StatusCode != http.StatusOK {
-		log.Println("error: ", refreshResponse.Error)
-		log.Println("error_description: ", refreshResponse.ErrorDescription)
-		log.Println("token response was error as refresh")
-		renderUnexpectedError(w)
-		return
-	}
-	log.Println("access token: " + refreshResponse.AccessToken)
-	log.Println("token type: " + refreshResponse.TokenType)
-	log.Println("expires in: ", refreshResponse.ExpiresIn)
-	log.Println("requested to token endpoint as refresh")
+	//refreshResponse := refreshPointer.Response()
+	//log.WithFields(log.Fields{
+	//	"status": refreshResponse.Status,
+	//	"body":   refreshResponse.Body,
+	//}).Info("requested to token endpoint as refresh")
+	//if refreshResponse.StatusCode != http.StatusOK {
+	//	log.WithFields(log.Fields{
+	//		"error":             refreshResponse.Error,
+	//		"error_description": refreshResponse.ErrorDescription,
+	//	}).Fatal("token response was error as refresh")
+	//	renderUnexpectedError(w)
+	//	return
+	//}
+	//log.WithFields(log.Fields{
+	//	"access_token": refreshResponse.AccessToken,
+	//	"token_type":   refreshResponse.TokenType,
+	//	"expires_in":   refreshResponse.ExpiresIn,
+	//}).Info("requested to token endpoint as refresh")
 
 	renderCallback(w, userInfoResponse)
 
-	log.Println("-- callback completed --")
+	log.Info("-- callback completed --")
 }

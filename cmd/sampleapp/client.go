@@ -1,9 +1,8 @@
 package main
 
 import (
-	"log"
-
 	"github.com/patrickmn/go-cache"
+	log "github.com/sirupsen/logrus"
 )
 
 func setClientID(clientID string) {
@@ -13,11 +12,11 @@ func setClientID(clientID string) {
 func getClientID() string {
 
 	if clientID, found := cached.Get("ClientID"); found {
-		log.Println("load client id from cache")
+		log.Info("load client id from cache")
 		return clientID.(string)
 	}
 
-	log.Println("failed to load client id")
+	log.Warn("failed to load client id")
 	return ""
 }
 
@@ -28,13 +27,14 @@ func setClientSecret(clientSecret string) {
 func getClientSecret() string {
 
 	if clientSecret, found := cached.Get("ClientSecret"); found {
-		log.Println("load client secret from cache")
+		log.Info("load client secret from cache")
 		return clientSecret.(string)
 	}
 
-	log.Println("failed to load client secret")
+	log.Warn("failed to load client secret")
 	return ""
 }
+
 func setFormPost() {
 	cached.Set("FormPost", true, cache.DefaultExpiration)
 }
