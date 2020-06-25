@@ -98,16 +98,26 @@ func authentication(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Info("success to get openid configuration")
 
+	// load settings from cache
+	var responseMode string
+	if isFormPost() {
+		responseMode = responsemode.FormPost
+	} else {
+		responseMode = ""
+	}
+	responseType := getResponseType()
+
 	// generate URL to request to authorization endpoint
 	authorizationPotinter := authorization.NewAuthorization(
 		oIDCConfigResponse,
 		getClientID(),
 		configs.RedirectURI,
-		authorization.ResponseType(responsetype.Code),
 		authorization.Scope(scope.OpenID, scope.Email),
+		authorization.ResponseType(responseType),
 		authorization.Display(display.Touch),
 		authorization.State(state),
 		authorization.Nonce(nonce),
+		authorization.ResponseMode(responseMode),
 	)
 
 	url, err := authorizationPotinter.GenerateURL()
@@ -134,6 +144,23 @@ func callback(w http.ResponseWriter, r *http.Request) {
 		"method": r.Method,
 		"url":    r.URL,
 	}).Info("-- callback started --")
+
+	var callbackPointer *mycallback.Callback
+	if isFormPost() {
+		log.Info("response mode is form post")
+		err := r.ParseForm()
+		if err != nil {
+			log.Info("failed to parse post form")
+			renderUnexpectedError(w)
+			return
+		}
+		// parse callback form post
+		callbackPointer = mycallback.NewCallback(mycallback.Form(r.Form))
+	} else {
+		log.Info("response mode is query")
+		// parse callback query
+		callbackPointer = mycallback.NewCallback(mycallback.URI(r.URL))
+	}
 	if err := callbackPointer.Parse(); err != nil {
 		log.Fatal("failed to parse callback query")
 		renderUnexpectedError(w)
