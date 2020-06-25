@@ -101,7 +101,7 @@ func authentication(w http.ResponseWriter, r *http.Request) {
 	// generate URL to request to authorization endpoint
 	authorizationPotinter := authorization.NewAuthorization(
 		oIDCConfigResponse,
-		credential.GetClientIDValue(),
+		getClientID(),
 		configs.RedirectURI,
 		authorization.ResponseType(responsetype.Code),
 		authorization.Scope(scope.OpenID, scope.Email),
@@ -187,8 +187,8 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	// request to token endpoint
 	tokenPointer := token.NewToken(
 		oIDCConfigResponse,
-		credential.GetClientIDValue(),
-		credential.GetClientSecretValue(),
+		getClientID(),
+		getClientSecret(),
 		token.StatePass(statePass),
 		token.GrantType(granttype.AuthorizationCode),
 		token.AuthorizationCode(callbackResponse.AuthorizationCode),
@@ -287,7 +287,7 @@ func callback(w http.ResponseWriter, r *http.Request) {
 
 	err = iDTokenPointer.VerifyPayloadClaims(
 		idtoken.Issuer(),
-		idtoken.Audience(credential.GetClientIDValue()),
+		idtoken.Audience(getClientID()),
 		idtoken.Nonce(storedNonce.Value),
 		idtoken.DurationIssuedAt(600),
 	)
