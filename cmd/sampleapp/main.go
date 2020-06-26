@@ -44,6 +44,7 @@ func main() {
 		http.Redirect(w, r, "/index", http.StatusMovedPermanently)
 	})
 	mux.HandleFunc("/index", index)
+	mux.HandleFunc("/registration", registration)
 	mux.HandleFunc("/authentication", authentication)
 	mux.HandleFunc("/callback", callback)
 
@@ -63,6 +64,102 @@ func main() {
 
 func index(w http.ResponseWriter, r *http.Request) {
 	renderIndex(w)
+}
+
+func registration(w http.ResponseWriter, r *http.Request) {
+
+	log.WithFields(log.Fields{
+		"method": r.Method,
+		"url":    r.URL,
+	}).Info("-- registration started --")
+
+	if r.Method == http.MethodGet {
+		renderRegistration(w)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		log.Fatal("failed to parse post form")
+		renderUnexpectedError(w)
+		return
+	}
+	oIDCConfigURI := r.Form.Get("oidc_config_uri")
+	setOIDCConfigURI(oIDCConfigURI)
+
+	responseType := r.Form.Get("response_type")
+	setResponseType(responseType)
+
+	responseMode := r.Form.Get("response_mode")
+	if responseMode == "form_post" {
+		setFormPost()
+	}
+
+	oIDCConfigResponse, err := getOIDCConfigResponse()
+	if err != nil {
+		log.Fatal("failed to get openid configuration response")
+		renderUnexpectedError(w)
+		return
+	}
+	log.Info("success to get openid configuration")
+
+	registrationPointer := client.NewRegistration(
+		oIDCConfigResponse,
+		[]string{
+			configs.RedirectURI,
+		},
+		client.ApplicationType("web"),
+		client.ResponseTypes([]string{
+			"code",
+		}),
+		client.GrantTypes([]string{
+			"authorization_code",
+			"refresh_token",
+		}),
+		client.Name("RP Kura"),
+		client.SubjectType("pairwise"),
+		client.TokenEndpointAuthMethod("client_secret_basic"),
+		client.Contacts([]string{"mkurahay@gmail.com"}),
+	)
+
+	err = registrationPointer.Request()
+	if err != nil {
+		log.WithFields(log.Fields{
+			"status": registrationPointer.Response().Status,
+			"body":   registrationPointer.Response().Body,
+		}).Fatal("failed to request client registration")
+		renderUnexpectedError(w)
+		return
+	}
+
+	response := registrationPointer.Response()
+	log.WithFields(log.Fields{
+		"status": response.Status,
+		"body":   response.Body,
+	}).Info("requested to client registration endpoint")
+
+	if response.StatusCode != http.StatusCreated {
+		log.WithFields(log.Fields{
+			"error":             response.Error,
+			"error_description": response.ErrorDescription,
+		}).Fatal("client registration response was error")
+		renderUnexpectedError(w)
+		return
+	}
+	log.WithFields(log.Fields{
+		"client_name":               response.ClientName,
+		"client_id":                 response.ClientID,
+		"client_secret":             response.ClientSecret,
+		"registration_client_uri":   response.RegistrationClientURI,
+		"registration_access_token": response.RegistrationAccessToken,
+	}).Info("success to register client")
+
+	setClientID(response.ClientID)
+	setClientSecret(response.ClientSecret)
+
+	renderRegistrationComplete(w, response)
+
+	log.Info("-- registration completed --")
 }
 
 func authentication(w http.ResponseWriter, r *http.Request) {
