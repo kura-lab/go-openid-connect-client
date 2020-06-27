@@ -1,6 +1,7 @@
 package userinfo
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -14,6 +15,7 @@ import (
 type Response struct {
 	Status              string
 	StatusCode          int
+	Body                string
 	WWWAuthenticate     header.WWWAuthenticate
 	Subject             string `json:"sub"`
 	Name                string `json:"name"`
@@ -93,15 +95,29 @@ func (userInfo *UserInfo) Request() (nerr error) {
 		return
 	}
 
+	buf := bytes.NewBuffer(nil)
+	body := bytes.NewBuffer(nil)
+
+	w := io.MultiWriter(buf, body)
+	io.Copy(w, response.Body)
+
 	var userInfoResponse Response
-	err = json.NewDecoder(response.Body).Decode(&userInfoResponse)
+	userInfo.response = userInfoResponse
+	userInfo.response.Status = response.Status
+	userInfo.response.StatusCode = response.StatusCode
+
+	rawBody, err := ioutil.ReadAll(buf)
 	if err != nil {
 		nerr = err
 		return
 	}
-	userInfoResponse.Status = response.Status
-	userInfoResponse.StatusCode = response.StatusCode
-	userInfo.response = userInfoResponse
+	userInfo.response.Body = string(rawBody)
+
+	err = json.NewDecoder(body).Decode(&userInfo.response)
+	if err != nil {
+		nerr = err
+		return
+	}
 
 	if response.Header.Get("WWW-Authenticate") != "" {
 		parsed := header.ParseWWWAuthenticateHeader(response.Header.Get("WWW-Authenticate"))

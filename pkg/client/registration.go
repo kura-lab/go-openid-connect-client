@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -15,6 +16,7 @@ import (
 type Response struct {
 	Status                  string
 	StatusCode              int
+	Body                    string
 	WWWAuthenticate         header.WWWAuthenticate
 	ClientID                string   `json:"client_id"`
 	ClientSecret            string   `json:"client_secret"`
@@ -22,13 +24,14 @@ type Response struct {
 	RegistrationAccessToken string   `json:"registration_access_token"`
 	RegistrationClientURI   string   `json:"registration_client_uri"`
 	ClientIDIssuedAt        int      `json:"client_id_issued_at"`
-	TokenEndpointAuthMethod []string `json:"token_endpoint_auth_method"`
+	TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
 	ApplicationType         string   `json:"application_type"`
 	RedirectURIs            []string `json:"redirect_uris"`
 	ClientName              string   `json:"client_name"`
 	LogoURI                 string   `json:"logo_uri"`
 	SubjectType             string   `json:"subject_type"`
 	JWKsURI                 string   `json:"jwks_uri"`
+	Contacts                []string `json:"contacts"`
 	Error                   string   `json:"error"`
 	ErrorDescription        string   `json:"error_description"`
 }
@@ -129,10 +132,18 @@ func InitiateLoginURI(initiateLoginURI string) Option {
 	}
 }
 
+// Contacts is functional option to add "contacts" parameter.
+func Contacts(contacts []string) Option {
+	return func(registration *Registration) error {
+		registration.request["contacts"] = contacts
+		return nil
+	}
+}
+
 // Request is method to request Registration Endpoint.
 func (registration *Registration) Request() (nerr error) {
 
-	body, err := json.Marshal(registration.request)
+	requestBody, err := json.Marshal(registration.request)
 	if err != nil {
 		nerr = err
 		return
@@ -141,7 +152,7 @@ func (registration *Registration) Request() (nerr error) {
 	registrationRequest, err := http.NewRequest(
 		"POST",
 		registration.oIDCConfig.RegistrationEndpoint,
-		strings.NewReader(string(body)),
+		strings.NewReader(string(requestBody)),
 	)
 	if err != nil {
 		nerr = err
@@ -166,15 +177,29 @@ func (registration *Registration) Request() (nerr error) {
 		return
 	}
 
+	buf := bytes.NewBuffer(nil)
+	responseBody := bytes.NewBuffer(nil)
+
+	w := io.MultiWriter(buf, responseBody)
+	io.Copy(w, response.Body)
+
 	var registrationResponse Response
-	err = json.NewDecoder(response.Body).Decode(&registrationResponse)
+	registration.response = registrationResponse
+	registration.response.Status = response.Status
+	registration.response.StatusCode = response.StatusCode
+
+	rawBody, err := ioutil.ReadAll(buf)
 	if err != nil {
 		nerr = err
 		return
 	}
-	registrationResponse.Status = response.Status
-	registrationResponse.StatusCode = response.StatusCode
-	registration.response = registrationResponse
+	registration.response.Body = string(rawBody)
+
+	err = json.NewDecoder(responseBody).Decode(&registration.response)
+	if err != nil {
+		nerr = err
+		return
+	}
 
 	return
 }

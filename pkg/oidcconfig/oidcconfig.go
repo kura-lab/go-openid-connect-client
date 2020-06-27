@@ -1,6 +1,7 @@
 package oidcconfig
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -11,6 +12,7 @@ import (
 type Response struct {
 	Status                            string
 	StatusCode                        int
+	Body                              string
 	Issuer                            string   `json:"issuer"`
 	RegistrationEndpoint              string   `json:"registration_endpoint"`
 	AuthorizationEndpoint             string   `json:"authorization_endpoint"`
@@ -197,15 +199,29 @@ func (config *OIDCConfig) Request() (nerr error) {
 		return
 	}
 
+	buf := bytes.NewBuffer(nil)
+	body := bytes.NewBuffer(nil)
+
+	w := io.MultiWriter(buf, body)
+	io.Copy(w, response.Body)
+
 	var configResponse Response
-	err = json.NewDecoder(response.Body).Decode(&configResponse)
+	config.response = configResponse
+	config.response.Status = response.Status
+	config.response.StatusCode = response.StatusCode
+
+	rawBody, err := ioutil.ReadAll(buf)
 	if err != nil {
 		nerr = err
 		return
 	}
-	configResponse.Status = response.Status
-	configResponse.StatusCode = response.StatusCode
-	config.response = configResponse
+	config.response.Body = string(rawBody)
+
+	err = json.NewDecoder(body).Decode(&config.response)
+	if err != nil {
+		nerr = err
+		return
+	}
 
 	return
 }

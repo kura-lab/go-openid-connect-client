@@ -83,6 +83,60 @@ func TestNewTokenAuthorizationCodeSuccess(t *testing.T) {
 	}
 }
 
+func TestNewTokenAuthorizationCodeClientSecretBasicSuccess(t *testing.T) {
+
+	defer gock.Off()
+
+	gock.New("https://op.example.com").
+		MatchHeader("Content-Type", "^application/x-www-form-urlencoded$").
+		BasicAuth("CLIENT_ID", "CLIENT_SECRET").
+		Post("/token").
+		Reply(200).
+		JSON(map[string]interface{}{
+			"access_token":  "ACCESS_TOKEN",
+			"token_type":    "Bearer",
+			"refresh_token": "REFRESH_TOKEN",
+			"expires_in":    1577804400,
+			"id_token":      "ID_TOKEN",
+		})
+
+	oIDCConfigPointer := oidcconfig.NewOIDCConfig(
+		oidcconfig.TokenEndpoint("https://op.example.com/token"),
+		oidcconfig.TokenEndpointAuthMethodsSupported([]string{"client_secret_basic"}),
+	)
+
+	oIDCConfigResponse := oIDCConfigPointer.Response()
+
+	statePass := state.Pass{VerificationResult: true}
+
+	tokenPointer := NewToken(
+		oIDCConfigResponse,
+		"CLIENT_ID",
+		"CLIENT_SECRET",
+		StatePass(statePass),
+		GrantType(granttype.AuthorizationCode),
+		AuthorizationCode("AUTHORIZATION_CODE"),
+		RedirectURI("REDIRECT_URI"),
+		CodeVerifier("CODE_VERIFIER"),
+	)
+
+	err := tokenPointer.Request()
+
+	if err != nil {
+		t.Fatalf("failed to request. err: %#v", err)
+	}
+
+	response := tokenPointer.Response()
+
+	if response.Status != "200 OK" {
+		t.Errorf("invalid http status. expected: 200 OK, actual: %v", response.Status)
+	}
+
+	if response.StatusCode != 200 {
+		t.Errorf("invalid http status code. expected: 200, actual: %v", response.StatusCode)
+	}
+}
+
 func TestNewTokenAuthorizationCodeClientSecretPostSuccess(t *testing.T) {
 
 	defer gock.Off()
@@ -117,6 +171,7 @@ func TestNewTokenAuthorizationCodeClientSecretPostSuccess(t *testing.T) {
 		AuthorizationCode("AUTHORIZATION_CODE"),
 		RedirectURI("REDIRECT_URI"),
 		CodeVerifier("CODE_VERIFIER"),
+		ClientSecretPost(),
 	)
 
 	err := tokenPointer.Request()

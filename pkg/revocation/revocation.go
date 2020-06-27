@@ -1,6 +1,7 @@
 package revocation
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -15,6 +16,7 @@ import (
 type Response struct {
 	Status           string
 	StatusCode       int
+	Body             string
 	Error            string `json:"error"`
 	ErrorDescription string `json:"error_description"`
 	ErrorURI         string `json:"error_uri"`
@@ -97,15 +99,29 @@ func (revocation *Revocation) Request() (nerr error) {
 		return
 	}
 
+	buf := bytes.NewBuffer(nil)
+	body := bytes.NewBuffer(nil)
+
+	w := io.MultiWriter(buf, body)
+	io.Copy(w, response.Body)
+
 	var revocationResponse Response
-	err = json.NewDecoder(response.Body).Decode(&revocationResponse)
+	revocation.response = revocationResponse
+	revocation.response.Status = response.Status
+	revocation.response.StatusCode = response.StatusCode
+
+	rawBody, err := ioutil.ReadAll(buf)
 	if err != nil {
 		nerr = err
 		return
 	}
-	revocationResponse.Status = response.Status
-	revocationResponse.StatusCode = response.StatusCode
-	revocation.response = revocationResponse
+	revocation.response.Body = string(rawBody)
+
+	err = json.NewDecoder(body).Decode(&revocation.response)
+	if err != nil {
+		nerr = err
+		return
+	}
 
 	return
 }

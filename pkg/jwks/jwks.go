@@ -1,6 +1,7 @@
 package jwks
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -26,6 +27,7 @@ type KeySet struct {
 type Response struct {
 	Status     string
 	StatusCode int
+	Body       string
 	KeySets    []KeySet `json:"keys"`
 }
 
@@ -61,15 +63,29 @@ func (jWKs *JWKs) Request() (nerr error) {
 		}
 	}()
 
+	buf := bytes.NewBuffer(nil)
+	body := bytes.NewBuffer(nil)
+
+	w := io.MultiWriter(buf, body)
+	io.Copy(w, response.Body)
+
 	var jWKsResponse Response
-	err = json.NewDecoder(response.Body).Decode(&jWKsResponse)
+	jWKs.response = jWKsResponse
+	jWKs.response.Status = response.Status
+	jWKs.response.StatusCode = response.StatusCode
+
+	rawBody, err := ioutil.ReadAll(buf)
 	if err != nil {
 		nerr = err
 		return
 	}
-	jWKsResponse.Status = response.Status
-	jWKsResponse.StatusCode = response.StatusCode
-	jWKs.response = jWKsResponse
+	jWKs.response.Body = string(rawBody)
+
+	err = json.NewDecoder(body).Decode(&jWKs.response)
+	if err != nil {
+		nerr = err
+		return
+	}
 
 	return
 }

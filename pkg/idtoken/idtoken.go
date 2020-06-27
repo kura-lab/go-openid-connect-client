@@ -110,10 +110,12 @@ func NewIDToken(oIDCConfig oidcconfig.Response, rawIDToken string) (*IDToken, er
 
 // VerifyIDTokenHeader is method to verify ID Token Header.
 func (iDToken *IDToken) VerifyIDTokenHeader() error {
-	if iDToken.iDTokenHeader.Type != "JWT" {
+
+	if iDToken.iDTokenHeader.Type != "" && iDToken.iDTokenHeader.Type != "JWT" {
 		return errors.New("unsupported header type. id token type supported by OpenID Connect is JWT, " +
 			"actual type in id token's header is " + iDToken.iDTokenHeader.Type)
 	}
+
 	if !mystring.Contains(
 		iDToken.iDTokenHeader.Algorithm,
 		iDToken.oIDCConfig.IDTokenSigningAlgValuesSupported,
@@ -161,7 +163,7 @@ func (iDToken *IDToken) generateRSAPublicKey(jWKsResponse jwks.Response) (rsa.Pu
 				return rsa.PublicKey{}, errors.New("invalid use. actual use in JWK set is " + keySet.Use + ". the use should be sig")
 			} else if keySet.KeyType != "RSA" {
 				return rsa.PublicKey{}, errors.New("invalid key type. actual key type in JWK set is " + keySet.KeyType + ". it's not match type in header")
-			} else if keySet.Algorithm != iDToken.iDTokenHeader.Algorithm {
+			} else if keySet.Algorithm != "" && keySet.Algorithm != iDToken.iDTokenHeader.Algorithm {
 				return rsa.PublicKey{}, errors.New("invalid algorithm. actual algorithm in JWK set is " + keySet.Algorithm + ". it's not match algorithm in header")
 			}
 

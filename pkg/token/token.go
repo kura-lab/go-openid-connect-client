@@ -1,8 +1,10 @@
 package token
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 	"github.com/kura-lab/go-openid-connect-client/pkg/state"
+	mystrings "github.com/kura-lab/go-openid-connect-client/pkg/strings"
 	"github.com/kura-lab/go-openid-connect-client/pkg/token/granttype"
 )
 
@@ -18,6 +21,7 @@ import (
 type Response struct {
 	Status           string
 	StatusCode       int
+	Body             string
 	AccessToken      string `json:"access_token"`
 	TokenType        string `json:"token_type"`
 	RefreshToken     string `json:"refresh_token"`
@@ -43,6 +47,8 @@ type Token struct {
 	authorizationCode string
 	redirectURI       string
 	refreshToken      string
+
+	tokenEndpointAuthMethod string
 }
 
 // NewToken is Token constructor function.
@@ -52,6 +58,8 @@ func NewToken(oIDCConfig oidcconfig.Response, clientID string, clientSecret stri
 	token.clientID = clientID
 	token.clientSecret = clientSecret
 	token.grantType = "authorization_code"
+
+	token.tokenEndpointAuthMethod = "client_secret_basic"
 
 	for _, option := range options {
 		option(token)
@@ -119,6 +127,15 @@ func RefreshToken(refreshToken string) Option {
 	}
 }
 
+// ClientSecretPost is functional option to specify client_id and client_secret with post body. token_endpoint_auth_method is "client_secret_post".
+// default method is "client_secret_basic"(Basic Authentication) if not specify this option.
+func ClientSecretPost() Option {
+	return func(token *Token) error {
+		token.tokenEndpointAuthMethod = "client_secret_post"
+		return nil
+	}
+}
+
 // Request is method to request Token Endpoint.
 func (token *Token) Request() (nerr error) {
 
@@ -145,17 +162,17 @@ func (token *Token) Request() (nerr error) {
 		values.Add("refresh_token", token.refreshToken)
 	}
 
-	tokenEndpointAuthMethod := "client_secret_basic"
-	for _, method := range token.oIDCConfig.TokenEndpointAuthMethodsSupported {
-		if method == "client_secret_basic" {
-			tokenEndpointAuthMethod = "client_secret_basic"
-			break
-		} else if method == "client_secret_post" {
-			tokenEndpointAuthMethod = "client_secret_post"
-			values.Add("client_id", token.clientID)
-			values.Add("client_secret", token.clientSecret)
-			break
+	if len(token.oIDCConfig.TokenEndpointAuthMethodsSupported) > 0 {
+		if !mystrings.Contains(token.tokenEndpointAuthMethod, token.oIDCConfig.TokenEndpointAuthMethodsSupported) {
+			nerr = errors.New("unsupported token_endpoint_auth_method. actual is " + token.tokenEndpointAuthMethod +
+				". support method are " + fmt.Sprintf("%#v", token.oIDCConfig.TokenEndpointAuthMethodsSupported))
+			return
 		}
+	}
+
+	if token.tokenEndpointAuthMethod == "client_secret_post" {
+		values.Add("client_id", token.clientID)
+		values.Add("client_secret", token.clientSecret)
 	}
 
 	tokenRequest, err := http.NewRequest(
@@ -169,7 +186,7 @@ func (token *Token) Request() (nerr error) {
 	}
 	tokenRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	if tokenEndpointAuthMethod == "client_secret_basic" {
+	if token.tokenEndpointAuthMethod == "client_secret_basic" {
 		tokenRequest.SetBasicAuth(token.clientID, token.clientSecret)
 	}
 
@@ -190,15 +207,29 @@ func (token *Token) Request() (nerr error) {
 		return
 	}
 
+	buf := bytes.NewBuffer(nil)
+	body := bytes.NewBuffer(nil)
+
+	w := io.MultiWriter(buf, body)
+	io.Copy(w, response.Body)
+
 	var tokenResponse Response
-	err = json.NewDecoder(response.Body).Decode(&tokenResponse)
+	token.response = tokenResponse
+	token.response.Status = response.Status
+	token.response.StatusCode = response.StatusCode
+
+	rawBody, err := ioutil.ReadAll(buf)
 	if err != nil {
 		nerr = err
 		return
 	}
-	tokenResponse.Status = response.Status
-	tokenResponse.StatusCode = response.StatusCode
-	token.response = tokenResponse
+	token.response.Body = string(rawBody)
+
+	err = json.NewDecoder(body).Decode(&token.response)
+	if err != nil {
+		nerr = err
+		return
+	}
 
 	return
 }

@@ -34,18 +34,19 @@ func TestNewRegistrationSuccess(t *testing.T) {
 			"token_endpoint_auth_method": "client_secret_basic",
 			"jwks_uri":                   "https://rp.example.com/jwks",
 			"initiate_login_uri":         "https://rp.example.com/login",
+			"contacts": []string{
+				"janedoe@rp.example.com",
+			},
 		}).
 		Reply(201).
 		JSON(map[string]interface{}{
-			"client_id":                 "CLIENT_ID",
-			"client_secret":             "CLIENT_SECRET",
-			"client_secret_expires_at":  0,
-			"registration_access_token": "REGISTRATION_ACCESS_TOKEN",
-			"registration_client_uri":   "https://op.example.com/registration?client_id=CLIENT_ID",
-			"token_endpoint_auth_method": []string{
-				"client_secret_basic",
-			},
-			"application_type": "web",
+			"client_id":                  "CLIENT_ID",
+			"client_secret":              "CLIENT_SECRET",
+			"client_secret_expires_at":   0,
+			"registration_access_token":  "REGISTRATION_ACCESS_TOKEN",
+			"registration_client_uri":    "https://op.example.com/registration?client_id=CLIENT_ID",
+			"token_endpoint_auth_method": "client_secret_basic",
+			"application_type":           "web",
 			"redirect_uris": []string{
 				"https://rp.example.com/callback",
 				"https://rp.example.com/callback2",
@@ -54,6 +55,9 @@ func TestNewRegistrationSuccess(t *testing.T) {
 			"logo_uri":     "https://rp.example.com/logo.png",
 			"subject_type": "pairwise",
 			"jwks_uri":     "https://rp.example.com/my_public_keys.jwks",
+			"contacts": []string{
+				"janedoe@rp.example.com",
+			},
 		})
 
 	oIDCConfigPointer := oidcconfig.NewOIDCConfig(
@@ -82,6 +86,7 @@ func TestNewRegistrationSuccess(t *testing.T) {
 		TokenEndpointAuthMethod("client_secret_basic"),
 		JWKsURI("https://rp.example.com/jwks"),
 		InitiateLoginURI("https://rp.example.com/login"),
+		Contacts([]string{"janedoe@rp.example.com"}),
 	)
 
 	err := registrationPointer.Request()
@@ -124,10 +129,8 @@ func TestNewRegistrationSuccess(t *testing.T) {
 		t.Errorf("invalid client_id_issued_at. expected: 0, actual: %v", response.ClientIDIssuedAt)
 	}
 
-	for key, expected := range []string{"client_secret_basic"} {
-		if response.TokenEndpointAuthMethod[key] != expected {
-			t.Errorf("invalid token_endpoint_auth_method. expected: %v, actual: %v", expected, response.TokenEndpointAuthMethod[key])
-		}
+	if response.TokenEndpointAuthMethod != "client_secret_basic" {
+		t.Errorf("invalid token_endpoint_auth_method. expected: client_secret_basic, actual: %v", response.TokenEndpointAuthMethod)
 	}
 
 	if response.ApplicationType != "web" {
@@ -157,6 +160,12 @@ func TestNewRegistrationSuccess(t *testing.T) {
 
 	if response.JWKsURI != "https://rp.example.com/my_public_keys.jwks" {
 		t.Errorf("invalid jwks_uri. expected: , actual: %v", response.JWKsURI)
+	}
+
+	for key, expected := range []string{"janedoe@rp.example.com"} {
+		if response.Contacts[key] != expected {
+			t.Errorf("invalid contacts. expected: %v, actual: %v", expected, response.Contacts[key])
+		}
 	}
 
 	if response.Error != "" {
