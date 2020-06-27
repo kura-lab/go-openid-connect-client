@@ -45,6 +45,7 @@ func main() {
 	})
 	mux.HandleFunc("/index", index)
 	mux.HandleFunc("/registration", registration)
+	mux.HandleFunc("/rp/", initiateLoginURI)
 	mux.HandleFunc("/authentication", authentication)
 	mux.HandleFunc("/callback", callback)
 
@@ -64,6 +65,36 @@ func main() {
 
 func index(w http.ResponseWriter, r *http.Request) {
 	renderIndex(w)
+}
+
+func initiateLoginURI(w http.ResponseWriter, r *http.Request) {
+
+	log.WithFields(log.Fields{
+		"method": r.Method,
+		"url":    r.URL,
+	}).Info("-- initiate login uri started --")
+
+	// parse path (/rp/<rp_id>/rp-3rd_party-init-login/<client_id>)
+	clientID := strings.Replace(r.URL.Path, "/rp/rp_kura/rp-3rd_party-init-login/", "", 1)
+
+	if clientID != getClientID() {
+		log.WithFields(log.Fields{
+			"initiate login uri": r.URL.Path,
+		}).Warn("invalid initiate login uri")
+		renderUnexpectedError(w)
+		return
+	}
+
+	log.WithFields(log.Fields{
+		"client_id":          clientID,
+		"initiate login uri": r.URL.Path,
+	}).Info("redirected to sso endpoint(/authentication) from initiate login uri")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Location", "/authentication")
+	w.WriteHeader(http.StatusMovedPermanently)
+
+	log.Info("-- initiate login uri completed --")
 }
 
 func registration(w http.ResponseWriter, r *http.Request) {
