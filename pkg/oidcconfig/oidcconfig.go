@@ -174,7 +174,7 @@ func IDTokenSigningAlgValuesSupported(iDTokenSigningAlgValuesSupported []string)
 // Request is method to request OpenID Configuration Endpoint.
 func (config *OIDCConfig) Request() (nerr error) {
 	configRequest, err := http.NewRequest(
-		"GET",
+		http.MethodGet,
 		config.uRL,
 		nil,
 	)
