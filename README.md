@@ -20,6 +20,7 @@ First, let's start the application. Then, check the flow of processing with the 
 * [OpenID Connect Dynamic Client Registration 1.0 incorporating errata set 1](https://openid.net/specs/openid-connect-registration-1_0.html)
 * [OAuth 2.0 Multiple Response Type Encoding Practices](https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html)
 * [OAuth 2.0 Form Post Response Mode](https://openid.net/specs/oauth-v2-form-post-response-mode-1_0.html)
+* [OpenID Connect Back-Channel Logout 1.0 - draft 04](https://openid.net/specs/openid-connect-backchannel-1_0.html)
 
 ### IETF
 * [The OAuth 2.0 Authorization Framework](https://tools.ietf.org/html/rfc6749)
