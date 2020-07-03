@@ -21,6 +21,7 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/token"
 	"github.com/kura-lab/go-openid-connect-client/pkg/token/granttype"
 	"github.com/kura-lab/go-openid-connect-client/pkg/userinfo"
+	"github.com/kura-lab/go-openid-connect-client/pkg/webfinger"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -44,6 +45,7 @@ func main() {
 		http.Redirect(w, r, "/index", http.StatusMovedPermanently)
 	})
 	mux.HandleFunc("/index", index)
+	mux.HandleFunc("/registration/webfinger", registrationViaWebfinger)
 	mux.HandleFunc("/registration", registration)
 	mux.HandleFunc("/rp/", initiateLoginURI)
 	mux.HandleFunc("/authentication", authentication)
@@ -95,6 +97,9 @@ func initiateLoginURI(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusMovedPermanently)
 
 	log.Info("-- initiate login uri completed --")
+}
+
+func registrationViaWebfinger(w http.ResponseWriter, r *http.Request) {
 }
 
 func registration(w http.ResponseWriter, r *http.Request) {
