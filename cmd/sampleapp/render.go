@@ -11,7 +11,6 @@ import (
 var (
 	indexTemplate                = template.Must(template.ParseFiles("../../web/template/index.html"))
 	webfingerTemplate            = template.Must(template.ParseFiles("../../web/template/webfinger.html"))
-	webfingerCompleteTemplate    = template.Must(template.ParseFiles("../../web/template/webfinger_complete.html"))
 	registrationTemplate         = template.Must(template.ParseFiles("../../web/template/registration.html"))
 	registrationCompleteTemplate = template.Must(template.ParseFiles("../../web/template/registration_complete.html"))
 	callbackTemplate             = template.Must(template.ParseFiles("../../web/template/callback.html"))
@@ -32,14 +31,6 @@ func renderWebfinger(w http.ResponseWriter) {
 	w.Header().Set("Pragma", "no-cache")
 	w.WriteHeader(http.StatusOK)
 	webfingerTemplate.Execute(w, nil)
-}
-
-func renderWebfingerComplete(w http.ResponseWriter, registrationResponse client.Response) {
-	w.Header().Set("Content-Type", "text/html")
-	w.Header().Set("Cache-Control", "no-store")
-	w.Header().Set("Pragma", "no-cache")
-	w.WriteHeader(http.StatusOK)
-	webfingerCompleteTemplate.Execute(w, registrationResponse)
 }
 
 func renderRegistration(w http.ResponseWriter) {
