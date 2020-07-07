@@ -21,6 +21,7 @@ import (
 	"github.com/kura-lab/go-openid-connect-client/pkg/token"
 	"github.com/kura-lab/go-openid-connect-client/pkg/token/granttype"
 	"github.com/kura-lab/go-openid-connect-client/pkg/userinfo"
+	"github.com/kura-lab/go-openid-connect-client/pkg/webfinger"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -44,6 +45,7 @@ func main() {
 		http.Redirect(w, r, "/index", http.StatusMovedPermanently)
 	})
 	mux.HandleFunc("/index", index)
+	mux.HandleFunc("/webfinger", registrationViaWebfinger)
 	mux.HandleFunc("/registration", registration)
 	mux.HandleFunc("/rp/", initiateLoginURI)
 	mux.HandleFunc("/authentication", authentication)
@@ -95,6 +97,144 @@ func initiateLoginURI(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusMovedPermanently)
 
 	log.Info("-- initiate login uri completed --")
+}
+
+func registrationViaWebfinger(w http.ResponseWriter, r *http.Request) {
+
+	log.WithFields(log.Fields{
+		"method": r.Method,
+		"url":    r.URL,
+	}).Info("-- registration via webfinger started --")
+
+	if r.Method == http.MethodGet {
+		renderWebfinger(w)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		log.Fatal("failed to parse post form")
+		renderUnexpectedError(w)
+		return
+	}
+	webfingerHost := r.Form.Get("webfinger_host")
+
+	acctURISyntax := r.Form.Get("resource_acct_uri_syntax")
+	uRISyntax := r.Form.Get("resource_uri_syntax")
+
+	var webfingerPointer *webfinger.Webfinger
+	if acctURISyntax != "" {
+		webfingerPointer = webfinger.NewWebfinger(
+			webfingerHost,
+			webfinger.AcctURI("acct:"+acctURISyntax, "rp.certification.openid.net:8080"),
+		)
+	} else if uRISyntax != "" {
+		webfingerPointer = webfinger.NewWebfinger(
+			webfingerHost,
+			webfinger.URL(uRISyntax),
+		)
+	} else {
+		log.Fatal("unsufficient parameter. require resource parameter")
+		renderUnexpectedError(w)
+		return
+	}
+
+	if err := webfingerPointer.Request(); err != nil {
+		log.Fatal("failed to request webfinger")
+	}
+
+	responseWebfinger := webfingerPointer.Response()
+	log.WithFields(log.Fields{
+		"status": responseWebfinger.Status,
+		"body":   responseWebfinger.Body,
+	}).Info("requested to client registration endpoint")
+
+	if responseWebfinger.StatusCode != http.StatusOK {
+		log.Fatal("failed to request webfinger")
+		renderUnexpectedError(w)
+		return
+	}
+	log.WithFields(log.Fields{
+		"subject": responseWebfinger.Subject,
+		"rel":     responseWebfinger.Links[0].Rel,
+		"href":    responseWebfinger.Links[0].Href,
+	}).Info("success to request webfinger")
+
+	setOIDCConfigURI(responseWebfinger.Links[0].Href + "/.well-known/openid-configuration")
+
+	responseType := r.Form.Get("response_type")
+	setResponseType(responseType)
+
+	responseMode := r.Form.Get("response_mode")
+	if responseMode == "form_post" {
+		setFormPost()
+	}
+
+	oIDCConfigResponse, err := getOIDCConfigResponse()
+	if err != nil {
+		log.Fatal("failed to get openid configuration response")
+		renderUnexpectedError(w)
+		return
+	}
+	log.Info("success to get openid configuration")
+
+	registrationPointer := client.NewRegistration(
+		oIDCConfigResponse,
+		[]string{
+			configs.RedirectURI,
+		},
+		client.ApplicationType("web"),
+		client.ResponseTypes([]string{
+			"code",
+		}),
+		client.GrantTypes([]string{
+			"authorization_code",
+			"refresh_token",
+		}),
+		client.Name("RP Kura"),
+		client.SubjectType("pairwise"),
+		client.TokenEndpointAuthMethod("client_secret_basic"),
+		client.Contacts([]string{"mkurahay@gmail.com"}),
+	)
+
+	err = registrationPointer.Request()
+	if err != nil {
+		log.WithFields(log.Fields{
+			"status": registrationPointer.Response().Status,
+			"body":   registrationPointer.Response().Body,
+		}).Fatal("failed to request client registration")
+		renderUnexpectedError(w)
+		return
+	}
+
+	response := registrationPointer.Response()
+	log.WithFields(log.Fields{
+		"status": response.Status,
+		"body":   response.Body,
+	}).Info("requested to client registration endpoint")
+
+	if response.StatusCode != http.StatusCreated {
+		log.WithFields(log.Fields{
+			"error":             response.Error,
+			"error_description": response.ErrorDescription,
+		}).Fatal("client registration response was error")
+		renderUnexpectedError(w)
+		return
+	}
+	log.WithFields(log.Fields{
+		"client_name":               response.ClientName,
+		"client_id":                 response.ClientID,
+		"client_secret":             response.ClientSecret,
+		"registration_client_uri":   response.RegistrationClientURI,
+		"registration_access_token": response.RegistrationAccessToken,
+	}).Info("success to register client")
+
+	setClientID(response.ClientID)
+	setClientSecret(response.ClientSecret)
+
+	renderRegistrationComplete(w, response)
+
+	log.Info("-- registration via webfinger completed --")
 }
 
 func registration(w http.ResponseWriter, r *http.Request) {

@@ -70,7 +70,7 @@ func (revocation *Revocation) Request() (nerr error) {
 	}
 
 	revocationRequest, err := http.NewRequest(
-		"POST",
+		http.MethodPost,
 		revocation.oIDCConfig.RevocationEndpoint,
 		strings.NewReader(values.Encode()),
 	)

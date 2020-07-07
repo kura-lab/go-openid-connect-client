@@ -47,7 +47,7 @@ func RegistrationAccessToken(registrationAccessToken string) ConfigurationOption
 func (configuration *Configuration) Request() (nerr error) {
 
 	configurationRequest, err := http.NewRequest(
-		"GET",
+		http.MethodGet,
 		configuration.oIDCConfig.RegistrationEndpoint,
 		nil,
 	)

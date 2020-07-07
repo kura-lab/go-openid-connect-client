@@ -105,7 +105,7 @@ func (introspection *Introspection) Request() (nerr error) {
 	}
 
 	introspectionRequest, err := http.NewRequest(
-		"POST",
+		http.MethodPost,
 		introspection.oIDCConfig.IntrospectionEndpoint,
 		strings.NewReader(values.Encode()),
 	)

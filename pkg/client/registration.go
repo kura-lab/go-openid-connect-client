@@ -150,7 +150,7 @@ func (registration *Registration) Request() (nerr error) {
 	}
 
 	registrationRequest, err := http.NewRequest(
-		"POST",
+		http.MethodPost,
 		registration.oIDCConfig.RegistrationEndpoint,
 		strings.NewReader(string(requestBody)),
 	)

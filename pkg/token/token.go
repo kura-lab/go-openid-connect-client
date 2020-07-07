@@ -176,7 +176,7 @@ func (token *Token) Request() (nerr error) {
 	}
 
 	tokenRequest, err := http.NewRequest(
-		"POST",
+		http.MethodPost,
 		token.oIDCConfig.TokenEndpoint,
 		strings.NewReader(values.Encode()),
 	)

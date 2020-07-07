@@ -67,7 +67,7 @@ func NewUserInfo(oIDCConfig oidcconfig.Response, accessToken string) *UserInfo {
 func (userInfo *UserInfo) Request() (nerr error) {
 
 	userInfoRequest, err := http.NewRequest(
-		"POST",
+		http.MethodPost,
 		userInfo.oIDCConfig.UserInfoEndpoint,
 		nil,
 	)
