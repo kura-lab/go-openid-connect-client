@@ -2,8 +2,9 @@ package configs
 
 // Constants for RP and OP.
 const (
-	RedirectURI   = "https://rp.example.com/callback"
-	OIDCConfigURI = "https://op.example.com/.well-known/openid-configuration"
+	RedirectURI           = "https://rp.example.com/callback"
+	PostLogoutRedirectURI = "https://rp.example.com/logout"
+	OIDCConfigURI         = "https://op.example.com/.well-known/openid-configuration"
 )
 
 // GetClientIDFromSecureStore is function to load client id.
