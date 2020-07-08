@@ -37,6 +37,9 @@ func TestNewRegistrationSuccess(t *testing.T) {
 			"contacts": []string{
 				"janedoe@rp.example.com",
 			},
+			"post_logout_redirect_uris": []string{
+				"https://rp.example.com/logout",
+			},
 		}).
 		Reply(201).
 		JSON(map[string]interface{}{
@@ -57,6 +60,9 @@ func TestNewRegistrationSuccess(t *testing.T) {
 			"jwks_uri":     "https://rp.example.com/my_public_keys.jwks",
 			"contacts": []string{
 				"janedoe@rp.example.com",
+			},
+			"post_logout_redirect_uris": []string{
+				"https://rp.example.com/logout",
 			},
 		})
 
@@ -87,6 +93,7 @@ func TestNewRegistrationSuccess(t *testing.T) {
 		JWKsURI("https://rp.example.com/jwks"),
 		InitiateLoginURI("https://rp.example.com/login"),
 		Contacts([]string{"janedoe@rp.example.com"}),
+		PostLogoutRedirectURIs([]string{"https://rp.example.com/logout"}),
 	)
 
 	err := registrationPointer.Request()
@@ -165,6 +172,12 @@ func TestNewRegistrationSuccess(t *testing.T) {
 	for key, expected := range []string{"janedoe@rp.example.com"} {
 		if response.Contacts[key] != expected {
 			t.Errorf("invalid contacts. expected: %v, actual: %v", expected, response.Contacts[key])
+		}
+	}
+
+	for key, expected := range []string{"https://rp.example.com/logout"} {
+		if response.PostLogoutRedirectURIs[key] != expected {
+			t.Errorf("invalid post_logout_redirect_uris. expected: %v, actual: %v", expected, response.PostLogoutRedirectURIs[key])
 		}
 	}
 
