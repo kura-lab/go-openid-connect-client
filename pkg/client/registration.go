@@ -32,6 +32,7 @@ type Response struct {
 	SubjectType             string   `json:"subject_type"`
 	JWKsURI                 string   `json:"jwks_uri"`
 	Contacts                []string `json:"contacts"`
+	PostLogoutRedirectURIs  []string `json:"post_logout_redirect_uris"`
 	Error                   string   `json:"error"`
 	ErrorDescription        string   `json:"error_description"`
 }
@@ -136,6 +137,14 @@ func InitiateLoginURI(initiateLoginURI string) Option {
 func Contacts(contacts []string) Option {
 	return func(registration *Registration) error {
 		registration.request["contacts"] = contacts
+		return nil
+	}
+}
+
+// PostLogoutRedirectURIs is functional option to add "post_logout_redirect_uris" parameter.
+func PostLogoutRedirectURIs(uRIs []string) Option {
+	return func(registration *Registration) error {
+		registration.request["post_logout_redirect_uris"] = uRIs
 		return nil
 	}
 }
