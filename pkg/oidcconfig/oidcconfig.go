@@ -21,6 +21,7 @@ type Response struct {
 	RevocationEndpoint                string   `json:"revocation_endpoint"`
 	IntrospectionEndpoint             string   `json:"introspection_endpoint"`
 	JWKsURI                           string   `json:"jwks_uri"`
+	EndSessionEndpoint                string   `json:"end_session_endpoint"`
 	TokenEndpointAuthMethodsSupported []string `json:"token_endpoint_auth_methods_supported"`
 	ResponseTypesSupported            []string `json:"response_types_supported"`
 	ResponseModesSupported            []string `json:"response_modes_supported"`
@@ -41,6 +42,7 @@ type OIDCConfig struct {
 	registrationEndpoint              string
 	revocationEndpoint                string
 	introspectionEndpoint             string
+	endSessionEndpoint                string
 	tokenEndpointAuthMethodsSupported []string
 	responseTypesSupported            []string
 	responseModesSupported            []string
@@ -127,6 +129,14 @@ func IntrospectionEndpoint(introspectionEndpoint string) Option {
 func JWKsURI(jWKsURI string) Option {
 	return func(config *OIDCConfig) error {
 		config.jWKsURI = jWKsURI
+		return nil
+	}
+}
+
+// EndSessionEndpoint is functional option to add End Session Endpoint.
+func EndSessionEndpoint(endSessionEndpoint string) Option {
+	return func(config *OIDCConfig) error {
+		config.endSessionEndpoint = endSessionEndpoint
 		return nil
 	}
 }
@@ -253,6 +263,9 @@ func (config *OIDCConfig) Response() Response {
 	}
 	if config.jWKsURI != "" {
 		config.response.JWKsURI = config.jWKsURI
+	}
+	if config.endSessionEndpoint != "" {
+		config.response.EndSessionEndpoint = config.endSessionEndpoint
 	}
 	if len(config.tokenEndpointAuthMethodsSupported) > 0 {
 		config.response.TokenEndpointAuthMethodsSupported = config.tokenEndpointAuthMethodsSupported
