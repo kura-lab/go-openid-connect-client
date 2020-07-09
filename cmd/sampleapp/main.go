@@ -195,6 +195,7 @@ func registrationViaWebfinger(w http.ResponseWriter, r *http.Request) {
 		client.SubjectType("pairwise"),
 		client.TokenEndpointAuthMethod("client_secret_basic"),
 		client.Contacts([]string{"mkurahay@gmail.com"}),
+		client.PostLogoutRedirectURIs([]string{configs.PostLogoutRedirectURI}),
 	)
 
 	err = registrationPointer.Request()
@@ -291,6 +292,7 @@ func registration(w http.ResponseWriter, r *http.Request) {
 		client.SubjectType("pairwise"),
 		client.TokenEndpointAuthMethod("client_secret_basic"),
 		client.Contacts([]string{"mkurahay@gmail.com"}),
+		client.PostLogoutRedirectURIs([]string{configs.PostLogoutRedirectURI}),
 	)
 
 	err = registrationPointer.Request()
