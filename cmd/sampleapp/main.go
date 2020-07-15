@@ -742,3 +742,13 @@ func logout(w http.ResponseWriter, r *http.Request) {
 
 	log.Info("-- logout completed --")
 }
+
+func backChannelLogout(w http.ResponseWriter, r *http.Request) {
+
+	log.WithFields(log.Fields{
+		"method": r.Method,
+		"url":    r.URL,
+	}).Info("-- back-channel logout started --")
+
+	log.Info("-- back-channel logout completed --")
+}
