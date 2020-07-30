@@ -37,7 +37,7 @@ type Payload struct {
 	IssuedAt    int             `json:"iat"`
 	Nonce       string          `json:"nonce"`
 	JWTID       string          `json:"jti"`
-	Events      json.RawMessage `json:"http://schemas.openid.net/event/backchannel-logout"`
+	Events      json.RawMessage `json:"events"`
 	SessionID   string          `json:"sid"`
 }
 
