@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	myhash "github.com/kura-lab/go-openid-connect-client/pkg/hash"
 	"github.com/kura-lab/go-openid-connect-client/pkg/oidcconfig"
 	mystrings "github.com/kura-lab/go-openid-connect-client/pkg/strings"
 )
@@ -30,14 +29,12 @@ func TestNewOIDCConfigPayloadSuccess(t *testing.T) {
 		"aud": []string{
 			"CLIENT_ID",
 		},
-		"exp":       currentTime + 3600,
-		"iat":       currentTime,
-		"auth_time": currentTime,
-		"amr": []string{
-			"sms",
+		"iat": currentTime,
+		"jti": "JWT_ID",
+		"events": map[string]interface{}{
+			"http://schemas.openid.net/event/backchannel-logout": map[string]interface{}{},
 		},
-		"at_hash": myhash.GenerateHalfOfSHA256("ACCESS_TOKEN"),
-		"acr":     "nist_auth_level 1",
+		"sid": "SESSION_ID",
 	}
 	jsonPayload, err := json.Marshal(payload)
 	encodedPayload := base64.RawURLEncoding.EncodeToString(jsonPayload)
@@ -91,6 +88,18 @@ func TestNewOIDCConfigPayloadSuccess(t *testing.T) {
 	if logoutTokenPayload.IssuedAt != currentTime {
 		t.Fatalf("invalid iat: expected: %v, actual: %v", currentTime, logoutTokenPayload.IssuedAt)
 	}
+
+	if logoutTokenPayload.JWTID != "JWT_ID" {
+		t.Fatalf("invalid jti: expected: JWT_ID, actual: %v", logoutTokenPayload.JWTID)
+	}
+
+	if string(logoutTokenPayload.Events) != "{\"http://schemas.openid.net/event/backchannel-logout\":{}}" {
+		t.Fatalf("invalid events: expected: {\"http://schemas.openid.net/event/backchannel-logout\":{}}, actual: %s", logoutTokenPayload.Events)
+	}
+
+	if logoutTokenPayload.SessionID != "SESSION_ID" {
+		t.Fatalf("invalid sid: expected: SESSION_ID, actual: %s", logoutTokenPayload.SessionID)
+	}
 }
 
 func TestNewOIDCConfigPayloadAudienceStringSuccess(t *testing.T) {
@@ -106,17 +115,10 @@ func TestNewOIDCConfigPayloadAudienceStringSuccess(t *testing.T) {
 	currentTime := int(time.Now().Unix())
 
 	payload := map[string]interface{}{
-		"iss":       "https://op.example.com",
-		"sub":       "123456789",
-		"aud":       "CLIENT_ID",
-		"exp":       currentTime + 3600,
-		"iat":       currentTime,
-		"auth_time": currentTime,
-		"amr": []string{
-			"sms",
-		},
-		"at_hash": myhash.GenerateHalfOfSHA256("ACCESS_TOKEN"),
-		"acr":     "nist_auth_level 1",
+		"iss": "https://op.example.com",
+		"sub": "123456789",
+		"aud": "CLIENT_ID",
+		"iat": currentTime,
 	}
 	jsonPayload, err := json.Marshal(payload)
 	encodedPayload := base64.RawURLEncoding.EncodeToString(jsonPayload)
@@ -176,14 +178,7 @@ func TestNewOIDCConfigPayloadFailure(t *testing.T) {
 		"aud": []string{
 			"INVALID_CLIENT_ID",
 		},
-		"exp":       currentTime + 3600,
-		"iat":       currentTime - 600,
-		"auth_time": currentTime - 600,
-		"amr": []string{
-			"sms",
-		},
-		"at_hash": myhash.GenerateHalfOfSHA256("INVALID_ACCESS_TOKEN"),
-		"acr":     "nist_auth_level 1",
+		"iat": currentTime - 600,
 	}
 	jsonPayload, err := json.Marshal(payload)
 	encodedPayload := base64.RawURLEncoding.EncodeToString(jsonPayload)
