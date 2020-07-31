@@ -51,6 +51,7 @@ type LogoutToken struct {
 	expectedIssuer           string
 	expectedAudience         string
 	expectedDurationIssuedAt int
+	expectedJWTID            string
 }
 
 // NewLogoutToken is LogoutToken constructor function.
@@ -330,6 +331,14 @@ func DurationIssuedAt(duration int) Option {
 	}
 }
 
+// JWTID is functional option to add expected JWT ID.
+func JWTID(jWTID string) Option {
+	return func(logoutToken *LogoutToken) error {
+		logoutToken.expectedJWTID = jWTID
+		return nil
+	}
+}
+
 // VerifyPayloadClaims is method to verify claims included Logout Token payload.
 func (logoutToken *LogoutToken) VerifyPayloadClaims(options ...Option) error {
 	for _, option := range options {
@@ -361,6 +370,13 @@ func (logoutToken *LogoutToken) VerifyPayloadClaims(options ...Option) error {
 
 	if logoutToken.logoutTokenPayload.Nonce != "" {
 		return errors.New("contain nonce. logout token does not contain nonce. nonce: " + logoutToken.logoutTokenPayload.Nonce)
+	}
+
+	if logoutToken.expectedJWTID != "" {
+		if logoutToken.expectedJWTID != logoutToken.logoutTokenPayload.JWTID {
+			return errors.New("invalid jwt id. actual jwt id in id token's payload is " +
+				fmt.Sprintf("%v", logoutToken.logoutTokenPayload.JWTID) + ". expected jwt id is " + logoutToken.expectedJWTID)
+		}
 	}
 
 	return nil
