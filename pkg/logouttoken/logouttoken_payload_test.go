@@ -66,6 +66,7 @@ func TestNewOIDCConfigPayloadSuccess(t *testing.T) {
 		Issuer(),
 		Audience("CLIENT_ID"),
 		DurationIssuedAt(600),
+		JWTID("JWT_ID"),
 	)
 	if err != nil {
 		t.Fatalf("invalid claim in logout token payload: expected true, err: %#v", err)
@@ -179,6 +180,7 @@ func TestNewOIDCConfigPayloadFailure(t *testing.T) {
 			"INVALID_CLIENT_ID",
 		},
 		"iat": currentTime - 600,
+		"jti": "INVALID_JWT_ID",
 	}
 	jsonPayload, err := json.Marshal(payload)
 	encodedPayload := base64.RawURLEncoding.EncodeToString(jsonPayload)
@@ -252,5 +254,18 @@ func TestNewOIDCConfigPayloadFailure(t *testing.T) {
 
 	if logoutTokenPayload.IssuedAt != currentTime-600 {
 		t.Fatalf("expected: %v, actual: %v", currentTime-600, logoutTokenPayload.IssuedAt)
+	}
+
+	// jti claim error test
+	logoutTokenPointer, _ = NewLogoutToken(
+		oIDCConfigResponse,
+		rawLogoutToken,
+	)
+
+	err = logoutTokenPointer.VerifyPayloadClaims(
+		JWTID("JWT_ID"),
+	)
+	if err == nil {
+		t.Fatalf("success to verify jti claim: not expected nil")
 	}
 }
