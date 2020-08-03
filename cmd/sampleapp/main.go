@@ -52,6 +52,7 @@ func main() {
 	mux.HandleFunc("/authentication", authentication)
 	mux.HandleFunc("/callback", callback)
 	mux.HandleFunc("/logout", logout)
+	mux.HandleFunc("/backchannel_logout", backChannelLogout)
 
 	// server settings
 	server := &http.Server{
