@@ -751,5 +751,13 @@ func backChannelLogout(w http.ResponseWriter, r *http.Request) {
 		"url":    r.URL,
 	}).Info("-- back-channel logout started --")
 
+	err := r.ParseForm()
+	if err != nil {
+		log.Fatal("failed to parse post form")
+		renderUnexpectedError(w)
+		return
+	}
+	logoutToken := r.Form.Get("logout_token")
+
 	log.Info("-- back-channel logout completed --")
 }
