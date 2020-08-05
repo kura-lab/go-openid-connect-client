@@ -759,5 +759,14 @@ func backChannelLogout(w http.ResponseWriter, r *http.Request) {
 	}
 	logoutToken := r.Form.Get("logout_token")
 
+	// get openid configuration
+	oIDCConfigResponse, err := getOIDCConfigResponse()
+	if err != nil {
+		log.Fatal("failed to get openid configuration response")
+		renderUnexpectedError(w)
+		return
+	}
+	log.Info("success to get openid configuration")
+
 	log.Info("-- back-channel logout completed --")
 }
