@@ -18,6 +18,7 @@ import (
 	mycallback "github.com/kura-lab/go-openid-connect-client/pkg/callback"
 	"github.com/kura-lab/go-openid-connect-client/pkg/client"
 	"github.com/kura-lab/go-openid-connect-client/pkg/idtoken"
+	mylogout "github.com/kura-lab/go-openid-connect-client/pkg/logout"
 	"github.com/kura-lab/go-openid-connect-client/pkg/token"
 	"github.com/kura-lab/go-openid-connect-client/pkg/token/granttype"
 	"github.com/kura-lab/go-openid-connect-client/pkg/userinfo"
@@ -50,6 +51,8 @@ func main() {
 	mux.HandleFunc("/rp/", initiateLoginURI)
 	mux.HandleFunc("/authentication", authentication)
 	mux.HandleFunc("/callback", callback)
+	mux.HandleFunc("/logout", logout)
+	mux.HandleFunc("/backchannel_logout", backChannelLogout)
 
 	// server settings
 	server := &http.Server{
@@ -195,6 +198,7 @@ func registrationViaWebfinger(w http.ResponseWriter, r *http.Request) {
 		client.SubjectType("pairwise"),
 		client.TokenEndpointAuthMethod("client_secret_basic"),
 		client.Contacts([]string{"mkurahay@gmail.com"}),
+		client.PostLogoutRedirectURIs([]string{configs.PostLogoutRedirectURI}),
 	)
 
 	err = registrationPointer.Request()
@@ -291,6 +295,7 @@ func registration(w http.ResponseWriter, r *http.Request) {
 		client.SubjectType("pairwise"),
 		client.TokenEndpointAuthMethod("client_secret_basic"),
 		client.Contacts([]string{"mkurahay@gmail.com"}),
+		client.PostLogoutRedirectURIs([]string{configs.PostLogoutRedirectURI}),
 	)
 
 	err = registrationPointer.Request()
@@ -685,4 +690,83 @@ func callback(w http.ResponseWriter, r *http.Request) {
 	renderCallback(w, userInfoResponse)
 
 	log.Info("-- callback completed --")
+}
+
+func logout(w http.ResponseWriter, r *http.Request) {
+
+	log.WithFields(log.Fields{
+		"method": r.Method,
+		"url":    r.URL,
+	}).Info("-- logout started --")
+
+	// generate state and nonce and store in cookie
+	state := rand.GenerateRandomString(32)
+	stateCookie := &http.Cookie{
+		Name:     "state",
+		Value:    state,
+		HttpOnly: true,
+	}
+	http.SetCookie(w, stateCookie)
+	log.Info("stored state in session")
+
+	// get openid configuration
+	oIDCConfigResponse, err := getOIDCConfigResponse()
+	if err != nil {
+		log.Fatal("failed to get openid configuration response")
+		renderUnexpectedError(w)
+		return
+	}
+	log.Info("success to get openid configuration")
+
+	// generate URL to redirect to logout endpoint
+	logoutPotinter := mylogout.NewLogout(
+		oIDCConfigResponse,
+		mylogout.IDTokenHint("ID_TOKEN_HINT"),
+		mylogout.PostLogoutRedirectURI(configs.PostLogoutRedirectURI),
+		mylogout.State(state),
+	)
+
+	url, err := logoutPotinter.GenerateURL()
+	if err != nil {
+		log.Fatal("failed to generate logout URL")
+		renderUnexpectedError(w)
+		return
+	}
+	log.WithFields(log.Fields{
+		"logout url": url,
+	}).Info("generated logout endpoint url and redirect the url")
+
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Location", url)
+	w.WriteHeader(http.StatusMovedPermanently)
+
+	log.Info("-- logout completed --")
+}
+
+func backChannelLogout(w http.ResponseWriter, r *http.Request) {
+
+	log.WithFields(log.Fields{
+		"method": r.Method,
+		"url":    r.URL,
+	}).Info("-- back-channel logout started --")
+
+	err := r.ParseForm()
+	if err != nil {
+		log.Fatal("failed to parse post form")
+		renderUnexpectedError(w)
+		return
+	}
+	logoutToken := r.Form.Get("logout_token")
+
+	// get openid configuration
+	oIDCConfigResponse, err := getOIDCConfigResponse()
+	if err != nil {
+		log.Fatal("failed to get openid configuration response")
+		renderUnexpectedError(w)
+		return
+	}
+	log.Info("success to get openid configuration")
+
+	log.Info("-- back-channel logout completed --")
 }
